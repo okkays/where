@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_background/flutter_background.dart';
 import 'package:go_router/go_router.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:where/background.dart';
 
 import './landing_page.dart';
 import './map_page.dart';
@@ -15,17 +17,15 @@ import './streams.dart';
 void main() async {
   runApp(const WhereApp());
 
-  final androidConfig = FlutterBackgroundAndroidConfig(
-    notificationTitle: "Where Location Sharing",
-    notificationText:
-        "The Where app is sharing your location in the background.",
-    notificationImportance: AndroidNotificationImportance.normal,
-    notificationIcon: AndroidResource(
-      name: 'background_icon',
-      defType: 'drawable',
-    ),
-  );
-  await FlutterBackground.initialize(androidConfig: androidConfig);
+  if (await FlutterBackground.hasPermissions &&
+      await Permission.location.isGranted) {
+    final granted = await FlutterBackground.initialize(
+      androidConfig: androidBackgroundConfig,
+    );
+    if (granted && !FlutterBackground.isBackgroundExecutionEnabled) {
+      await FlutterBackground.enableBackgroundExecution();
+    }
+  }
 }
 
 class WhereApp extends StatefulWidget {
@@ -119,34 +119,34 @@ class _WhereAppState extends State<WhereApp> {
                 builder: (context, state) {
                   appBarController.sink.add(defaultAppBarSnapshot);
                   return const LandingPage();
-                }
+                },
               ),
               GoRoute(
                 path: '/map',
                 builder: (context, state) {
                   appBarController.sink.add(
-                      const AppBarStreamSnapshot(title: 'Map')
+                    const AppBarStreamSnapshot(title: 'Map'),
                   );
                   return const MapPage();
-                }
+                },
               ),
               GoRoute(
                 path: '/sharing',
                 builder: (context, state) {
                   appBarController.sink.add(
-                      const AppBarStreamSnapshot(title: 'Sharing settings')
+                    const AppBarStreamSnapshot(title: 'Sharing settings'),
                   );
                   return const SharingPage();
-                }
+                },
               ),
               GoRoute(
                 path: '/permissions',
-                builder: (context, state){
+                builder: (context, state) {
                   appBarController.sink.add(
                     const AppBarStreamSnapshot(title: 'Permissions settings'),
                   );
                   return const PermissionsPage();
-                }
+                },
               ),
             ],
           ),
