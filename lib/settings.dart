@@ -9,13 +9,14 @@ Future<Database> openSettingsDatabase() async {
             name TEXT PRIMARY KEY,
             username TEXT NOT NULL,
             image TEXT NOT NULL,
-            token TEXT NOT NULL
+            token TEXT NOT NULL,
+            uuid TEXT NOT NULL
           )''');
     },
     onUpgrade: (_, _, _) async {
       await databaseFactory.deleteDatabase('settings.db');
     },
-    version: 3,
+    version: 4,
   );
 }
 
@@ -25,17 +26,25 @@ class Settings {
   String image;
   String token;
   Database? db;
+  final String uuid;
 
   Settings({
     required this.name,
     required this.username,
     required this.image,
     required this.token,
+    required this.uuid,
     this.db,
   });
 
   Map<String, Object?> toDb() {
-    return {'name': name, 'username': username, 'image': image, 'token': token};
+    return {
+      'name': name,
+      'username': username,
+      'image': image,
+      'token': token,
+      'uuid': uuid,
+    };
   }
 
   factory fromDb(Database db, Map<String, Object?> dbValue) {
@@ -45,6 +54,7 @@ class Settings {
       username: dbValue['username'] as String,
       image: dbValue['image'] as String,
       token: dbValue['token'] as String,
+      uuid: dbValue['uuid'] as String,
     );
   }
 

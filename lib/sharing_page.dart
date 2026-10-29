@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 
 import './settings.dart';
 
@@ -15,7 +16,14 @@ Future<Settings> getOnlySettings() async {
     return existing;
   }
 
-  return Settings(name: 'onlysettings', username: '', image: '', token: '');
+  var uuid = Uuid();
+  return Settings(
+    name: 'onlysettings',
+    username: '',
+    image: '',
+    token: '',
+    uuid: uuid.v1(),
+  );
 }
 
 class _SharingPageState extends State<SharingPage> {
@@ -63,6 +71,18 @@ class _SharingPageState extends State<SharingPage> {
                       onChanged: (newValue) {
                         data.username = newValue;
                       },
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                spacing: 10,
+                children: [
+                  Text('Device ID:', style: TextTheme.of(context).titleLarge),
+                  Expanded(
+                    child: TextFormField(
+                      enabled: false,
+                      initialValue: data.uuid,
                     ),
                   ),
                 ],

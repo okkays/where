@@ -44,7 +44,7 @@ dependencies:
   url_launcher: ^6.3.3
   location: ^10.0.2
   path: ^1.9.1
-
+  uuid: ^4.6.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
