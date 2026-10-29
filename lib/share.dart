@@ -12,7 +12,7 @@ Future<Database> openShareDatabase() async {
             name TEXT PRIMARY KEY,
             image TEXT NOT NULL,
             locations TEXT NOT NULL,
-            is_mine INTEGER NOT NULL,
+            is_mine INTEGER NOT NULL
           )''');
     },
     onUpgrade: (_, _, _) async {
@@ -52,7 +52,6 @@ class ShareLocation {
 class Share {
   final String name;
   final String image;
-  String search;
   bool isMine;
   final List<ShareLocation> locations;
   Database? db;
@@ -60,7 +59,6 @@ class Share {
   Share({
     required this.name,
     required this.image,
-    required this.search,
     required this.locations,
     required this.isMine,
     this.db,
@@ -70,7 +68,6 @@ class Share {
     return {
       'name': name,
       'image': image,
-      'search': search,
       'locations': jsonEncode(locations.map((l) => l.toDb())),
       'is_mine': isMine ? 1 : 0,
     };
@@ -82,7 +79,6 @@ class Share {
       db: db,
       name: dbValue['name'] as String,
       image: dbValue['image'] as String,
-      search: dbValue['search'] as String,
       isMine: dbValue['is_mine'] == 1,
       locations: List<String>.from(list).map(ShareLocation.fromDb).toList(),
     );
