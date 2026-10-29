@@ -36,81 +36,89 @@ class _SharingPageState extends State<SharingPage> {
       builder: (context, snapshot) {
         final data = snapshot.data;
         if (data == null) return Center(child: Text('loading...'));
-        return Padding(
-          padding: EdgeInsetsGeometry.all(10),
-          child: Column(
-            spacing: 10,
-            children: [
-              Row(
+        return Stack(
+          children: [
+            Padding(
+              padding: EdgeInsetsGeometry.all(10),
+              child: Column(
                 spacing: 10,
                 children: [
-                  Text('Name:', style: TextTheme.of(context).titleLarge),
-                  Expanded(
-                    child: TextFormField(
-                      decoration: InputDecoration(
-                        hintText: 'How to appear to others',
-                      ),
-                      initialValue: data.username,
-                      onChanged: (newValue) {
-                        data.username = newValue;
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              Row(
-                spacing: 10,
-                children: [
-                  Text('Token:', style: TextTheme.of(context).titleLarge),
-                  Expanded(
-                    child: TextFormField(
-                      decoration: InputDecoration(
-                        hintText: 'Github token with repo access',
-                      ),
-                      initialValue: data.username,
-                      onChanged: (newValue) {
-                        data.username = newValue;
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              Row(
-                spacing: 10,
-                children: [
-                  Text('Device ID:', style: TextTheme.of(context).titleLarge),
-                  Expanded(
-                    child: TextFormField(
-                      enabled: false,
-                      initialValue: data.uuid,
-                    ),
-                  ),
-                ],
-              ),
-              Spacer(),
-              Row(
-                mainAxisAlignment: .end,
-                spacing: 10,
-                children: [
-                  Padding(
-                    padding: EdgeInsetsGeometry.fromLTRB(0, 0, 20, 40),
-                    child: FloatingActionButton(
-                      onPressed: () {
-                        data.save();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Text('Preferences updated!'),
-                            showCloseIcon: true,
+                  Row(
+                    spacing: 10,
+                    children: [
+                      Text('Name:', style: TextTheme.of(context).titleLarge),
+                      Expanded(
+                        child: TextFormField(
+                          decoration: InputDecoration(
+                            hintText: 'How to appear to others',
                           ),
-                        );
-                      },
-                      child: Icon(Icons.save),
-                    ),
+                          initialValue: data.username,
+                          onChanged: (newValue) {
+                            data.username = newValue;
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    spacing: 10,
+                    children: [
+                      Text('Token:', style: TextTheme.of(context).titleLarge),
+                      Expanded(
+                        child: TextFormField(
+                          decoration: InputDecoration(
+                            hintText: 'Github token with repo access',
+                          ),
+                          initialValue: data.token,
+                          onChanged: (newValue) {
+                            data.token = newValue;
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    spacing: 10,
+                    children: [
+                      Text(
+                        'Device ID:',
+                        style: TextTheme.of(context).titleLarge,
+                      ),
+                      Expanded(
+                        child: TextFormField(
+                          enabled: false,
+                          initialValue: data.uuid,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
+            ),
+            Positioned(
+              bottom: MediaQuery.of(context).viewInsets.bottom + 40,
+              right: 20,
+              child: FloatingActionButton(
+                onPressed: () {
+                  data.save();
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      behavior: .floating,
+                      margin: EdgeInsets.only(
+                        left: 20,
+                        right: 100,
+                        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                      ),
+                      content: const Text('Preferences updated!'),
+                      showCloseIcon: true,
+                    ),
+                  );
+                },
+                child: Icon(Icons.save),
+              ),
+            ),
+          ],
         );
       },
     );
