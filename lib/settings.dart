@@ -1,3 +1,4 @@
+import 'package:uuid/uuid.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
@@ -27,6 +28,7 @@ class Settings {
   String token;
   Database? db;
   final String uuid;
+  static Settings? _singleton;
 
   Settings({
     required this.name,
@@ -84,5 +86,26 @@ class Settings {
     );
     if (settings.isEmpty) return null;
     return Settings.fromDb(db, settings.first);
+  }
+
+  static Future<Settings> getSingleton() async {
+    if (_singleton != null) {
+      return _singleton!;
+    }
+
+    final existing = await Settings.getFromDb('onlysettings');
+    if (existing != null) {
+      _singleton = existing;
+      return _singleton!;
+    }
+
+    var uuid = Uuid();
+    return Settings(
+      name: 'onlysettings',
+      username: '',
+      image: '',
+      token: '',
+      uuid: uuid.v1(),
+    );
   }
 }
