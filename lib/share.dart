@@ -10,9 +10,11 @@ Future<Database> openShareDatabase() async {
     onCreate: (db, version) {
       return db.execute('''CREATE TABLE share(
             name TEXT PRIMARY KEY,
+            storage TEXT NOT NULL,
             image TEXT NOT NULL,
             locations TEXT NOT NULL,
-            is_mine INTEGER NOT NULL
+            is_mine INTEGER NOT NULL,
+            updated TEXT NOT NULL
           )''');
     },
     onUpgrade: (_, _, _) async {
@@ -52,48 +54,58 @@ class ShareLocation {
 class Share {
   final String name;
   final String image;
+  String storage;
   bool isMine;
   final List<ShareLocation> locations;
-  Database? db;
+  DateTime updated;
+  static Database? _db;
+  bool isNew;
 
   Share({
     required this.name,
     required this.image,
+    required this.storage,
     required this.locations,
     required this.isMine,
-    this.db,
-  });
+    this.isNew = false,
+    DateTime? updated,
+  }) : updated = updated ?? DateTime.now().toUtc();
 
   Map<String, Object?> toDb() {
     return {
       'name': name,
       'image': image,
-      'locations': jsonEncode(locations.map((l) => l.toDb())),
+      'storage': storage,
+      'locations': jsonEncode(locations.map((l) => l.toDb()).toList()),
       'is_mine': isMine ? 1 : 0,
+      'updated': updated.toIso8601String(),
     };
   }
 
-  factory fromDb(Database db, Map<String, Object?> dbValue) {
+  factory fromDb(Map<String, Object?> dbValue) {
     final List<dynamic> list = jsonDecode(dbValue['locations'] as String);
     return Share(
-      db: db,
       name: dbValue['name'] as String,
       image: dbValue['image'] as String,
+      storage: dbValue['storage'] as String,
       isMine: dbValue['is_mine'] == 1,
       locations: List<String>.from(list).map(ShareLocation.fromDb).toList(),
+      updated: DateTime.parse(dbValue['updated'] as String),
     );
   }
 
-  Future<Database> waitForDb() async {
-    if (db != null && !(db!.isOpen)) {
-      db = null;
+  static Future<Database> getSingletonDb() async {
+    if (_db != null && !(_db!.isOpen)) {
+      _db = null;
     }
-    db ??= await openShareDatabase();
-    return db!;
+    _db ??= await openShareDatabase();
+    return _db!;
   }
 
   Future<void> save() async {
-    await (await waitForDb()).insert(
+    updated = DateTime.now().toUtc();
+
+    await (await getSingletonDb()).insert(
       'share',
       toDb(),
       conflictAlgorithm: ConflictAlgorithm.replace,
@@ -101,9 +113,19 @@ class Share {
   }
 
   static Future<List<Share>> getFromDb() async {
-    Database db = await openShareDatabase();
-
+    final db = await getSingletonDb();
     final List<Map<String, Object?>> shares = await db.query('share');
-    return shares.map((s) => Share.fromDb(db, s)).toList();
+    return shares.map(Share.fromDb).toList();
+  }
+
+  static Future<Share?> getMine() async {
+    final db = await getSingletonDb();
+    final List<Map<String, Object?>> shares = await db.query(
+      'share',
+      where: 'is_mine = ?',
+      whereArgs: [1],
+    );
+    if (shares.isEmpty) return null;
+    return Share.fromDb(shares.first);
   }
 }

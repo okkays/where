@@ -1,6 +1,8 @@
-import 'package:uuid/uuid.dart';
+import 'dart:convert';
+
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:uuid/uuid.dart';
 
 Future<Database> openSettingsDatabase() async {
   return openDatabase(
@@ -8,44 +10,52 @@ Future<Database> openSettingsDatabase() async {
     onCreate: (db, version) {
       return db.execute('''CREATE TABLE settings(
             name TEXT PRIMARY KEY,
+            uuid TEXT UNIQUE,
             username TEXT NOT NULL,
             image TEXT NOT NULL,
             token TEXT NOT NULL,
-            uuid TEXT NOT NULL
+            storage TEXT,
+            friends TEXT NOT NULL
           )''');
     },
     onUpgrade: (_, _, _) async {
       await databaseFactory.deleteDatabase('settings.db');
     },
-    version: 4,
+    version: 6,
   );
 }
 
 class Settings {
   final String name;
+  String uuid;
   String username;
   String image;
   String token;
+  String? storage;
+  List<String> friends;
   Database? db;
-  final String uuid;
   static Settings? _singleton;
 
   Settings({
     required this.name,
+    required this.uuid,
     required this.username,
     required this.image,
     required this.token,
-    required this.uuid,
+    required this.friends,
+    this.storage,
     this.db,
   });
 
   Map<String, Object?> toDb() {
     return {
       'name': name,
+      'uuid': uuid,
       'username': username,
       'image': image,
       'token': token,
-      'uuid': uuid,
+      'storage': storage,
+      'friends': jsonEncode(friends),
     };
   }
 
@@ -53,10 +63,12 @@ class Settings {
     return Settings(
       db: db,
       name: dbValue['name'] as String,
+      uuid: dbValue['uuid'] as String,
       username: dbValue['username'] as String,
       image: dbValue['image'] as String,
       token: dbValue['token'] as String,
-      uuid: dbValue['uuid'] as String,
+      storage: dbValue['storage'] as String?,
+      friends: List<String>.from(jsonDecode(dbValue['friends'] as String)),
     );
   }
 
@@ -99,13 +111,14 @@ class Settings {
       return _singleton!;
     }
 
-    var uuid = Uuid();
     return Settings(
       name: 'onlysettings',
+      uuid: Uuid().v4(),
       username: '',
       image: '',
       token: '',
-      uuid: uuid.v1(),
+      storage: '',
+      friends: [],
     );
   }
 }
