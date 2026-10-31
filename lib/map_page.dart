@@ -29,6 +29,11 @@ class _MapPageState extends State<MapPage> {
   List<Share> shares = [];
   Map<String, Color> colors = {};
 
+  CameraFit fit = CameraFit.coordinates(
+    coordinates: [LatLng(43.18449, -109.65367)],
+    maxZoom: 12,
+  );
+
   MapController controller = MapController();
 
   late Timer updateTimer;
@@ -64,6 +69,10 @@ class _MapPageState extends State<MapPage> {
         ),
       ),
     );
+  }
+
+  Future<void> refit() async {
+    controller.fitCamera(fit);
   }
 
   Future<void> refresh({bool updateFit = false}) async {
@@ -131,10 +140,9 @@ class _MapPageState extends State<MapPage> {
       );
     });
     print('POINTS: ${newCoordinates.length}');
+    fit = CameraFit.coordinates(coordinates: newCoordinates, maxZoom: 12);
     if (updateFit && newCoordinates.isNotEmpty) {
-      controller.fitCamera(
-        CameraFit.coordinates(coordinates: newCoordinates, maxZoom: 12),
-      );
+      controller.fitCamera(fit);
     }
     setState(() {
       markers = newMarkers;
@@ -170,10 +178,7 @@ class _MapPageState extends State<MapPage> {
     return FlutterMap(
       mapController: controller,
       options: MapOptions(
-        initialCameraFit: CameraFit.coordinates(
-          coordinates: [LatLng(43.18449, -109.65367)],
-          maxZoom: 12,
-        ),
+        initialCameraFit: fit,
         interactionOptions: InteractionOptions(
           flags: InteractiveFlag.pinchZoom | InteractiveFlag.drag,
         ),
@@ -209,11 +214,17 @@ class _MapPageState extends State<MapPage> {
                     : Icon(Icons.cloud_upload),
               ),
               FloatingActionButton(
+                heroTag: null,
                 backgroundColor: isRefreshing ? Colors.orange.shade100 : null,
                 onPressed: isRefreshing ? null : refresh,
                 child: isRefreshing
                     ? Icon(Icons.hourglass_top, color: Colors.orange.shade800)
                     : Icon(Icons.refresh),
+              ),
+              FloatingActionButton(
+                heroTag: null,
+                onPressed: refit,
+                child: Icon(Icons.fit_screen),
               ),
             ],
           ),
