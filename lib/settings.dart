@@ -15,13 +15,24 @@ Future<Database> openSettingsDatabase() async {
             image TEXT NOT NULL,
             token TEXT NOT NULL,
             storage TEXT,
-            friends TEXT NOT NULL
+            friends TEXT NOT NULL,
+            background INTEGER DEFAULT 0
           )''');
     },
-    onUpgrade: (_, _, _) async {
-      await databaseFactory.deleteDatabase('settings.db');
+    onUpgrade: (db, oldVersion, newVersion) async {
+      if (oldVersion <= 6) {
+        await databaseFactory.deleteDatabase('settings.db');
+        return;
+      }
+      final batch = db.batch();
+      if (oldVersion <= 7) {
+        batch.execute(
+          '''ALTER TABLE settings ADD COLUMN background INTEGER DEFAULT 0''',
+        );
+      }
+      batch.commit();
     },
-    version: 6,
+    version: 7,
   );
 }
 
@@ -33,6 +44,8 @@ class Settings {
   String token;
   String? storage;
   List<String> friends;
+  bool background;
+
   Database? db;
   static Settings? _singleton;
 
@@ -43,6 +56,7 @@ class Settings {
     required this.image,
     required this.token,
     required this.friends,
+    required this.background,
     this.storage,
     this.db,
   });
@@ -68,6 +82,7 @@ class Settings {
       image: dbValue['image'] as String,
       token: dbValue['token'] as String,
       storage: dbValue['storage'] as String?,
+      background: (dbValue['background'] as int) == 1,
       friends: List<String>.from(jsonDecode(dbValue['friends'] as String)),
     );
   }
@@ -119,6 +134,7 @@ class Settings {
       token: '',
       storage: '',
       friends: [],
+      background: false,
     );
   }
 }

@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_background/flutter_background.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:where/background.dart';
+import 'package:where/settings.dart';
 
 const successIcon = Icon(Icons.check_circle, color: Colors.green, size: 30);
 const errorIcon = Icon(Icons.error_outline, color: Colors.red, size: 30);
 const pendingIcon = Icon(Icons.change_circle, color: Colors.orange, size: 30);
+const offIcon = Icon(Icons.toggle_off, color: Colors.red, size: 30);
+const onIcon = Icon(Icons.toggle_on, color: Colors.green, size: 30);
 
 abstract class _Action extends ChangeNotifier {
   final String title;
@@ -51,8 +54,7 @@ class _PermissionAction extends _Action {
 class _BackgroundAction extends _Action {
   @override
   request(BuildContext context) async {
-    if ((await FlutterBackground.hasPermissions) &&
-        FlutterBackground.isBackgroundExecutionEnabled) {
+    if (await FlutterBackground.hasPermissions) {
       openAppSettings();
       return true;
     }
@@ -69,31 +71,73 @@ class _BackgroundAction extends _Action {
       notifyListeners();
       return false;
     }
-    bool enabled = FlutterBackground.isBackgroundExecutionEnabled;
-    if (!enabled) {
-      enabled = await FlutterBackground.enableBackgroundExecution();
-    }
-    if (enabled) {
-      icon = successIcon;
-      notifyListeners();
-      return true;
-    }
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: const Text('❗️Unable to start in background')),
-      );
-    }
-    icon = errorIcon;
+
+    icon = successIcon;
     notifyListeners();
-    return false;
+    return true;
   }
 
-  _BackgroundAction({required super.title, required super.subtitle})
-    : super(
-        icon: FlutterBackground.isBackgroundExecutionEnabled
-            ? successIcon
-            : errorIcon,
-      );
+  _BackgroundAction({required super.title, required super.subtitle}) : super() {
+    FlutterBackground.hasPermissions.then((isGranted) {
+      super.icon = isGranted ? successIcon : errorIcon;
+      notifyListeners();
+    });
+  }
+}
+
+class _ToggleService extends _Action {
+  @override
+  request(BuildContext context) async {
+    final settings = await Settings.getSingleton();
+
+    if (!(await FlutterBackground.hasPermissions)) {
+      icon = offIcon;
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: const Text('Enable permissions above first')),
+        );
+      }
+      notifyListeners();
+      settings.background = false;
+      await settings.save();
+      return false;
+    }
+
+    if (FlutterBackground.isBackgroundExecutionEnabled) {
+      await FlutterBackground.disableBackgroundExecution();
+      icon = offIcon;
+      notifyListeners();
+      settings.background = false;
+      await settings.save();
+      return false;
+    }
+
+    final enabled = await FlutterBackground.enableBackgroundExecution();
+
+    if (!enabled) {
+      icon = errorIcon;
+      notifyListeners();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: const Text('Something went wrong...')),
+        );
+      }
+      settings.background = false;
+      await settings.save();
+      return false;
+    }
+
+    icon = onIcon;
+    notifyListeners();
+    settings.background = true;
+    await settings.save();
+    return true;
+  }
+
+  _ToggleService({required super.title, required super.subtitle}) : super() {
+    icon = FlutterBackground.isBackgroundExecutionEnabled ? onIcon : offIcon;
+    notifyListeners();
+  }
 }
 
 class PermissionsPage extends StatefulWidget {
@@ -108,16 +152,20 @@ class _PermissionsPageState extends State<PermissionsPage> {
     _PermissionAction(
       permission: Permission.location,
       title: 'Location',
-      subtitle: 'To map and share',
+      subtitle: 'To map and share your location',
     ),
     _PermissionAction(
       permission: Permission.locationAlways,
-      title: 'Background location',
-      subtitle: 'To get location to share',
+      title: 'Location always',
+      subtitle: 'For all-the-time sharing',
     ),
     _BackgroundAction(
-      title: 'Run in background',
-      subtitle: 'To send shared location',
+      title: 'Background permission',
+      subtitle: 'Permission to keep the app running always',
+    ),
+    _ToggleService(
+      title: 'Background service',
+      subtitle: 'Start/stop background sharing',
     ),
   ];
 
@@ -155,23 +203,32 @@ class _PermissionsPageState extends State<PermissionsPage> {
               ),
             ),
             const VerticalDivider(width: 1),
-            Column(
-              mainAxisSize: .min,
-              crossAxisAlignment: .start,
-              children: [
-                Text(
-                  permission.title,
-                  style: TextTheme.of(context).headlineSmall!
-                      .copyWith(color: ColorScheme.of(context).primary),
-                ),
-                Text(
-                  permission.subtitle,
-                  style: TextTheme.of(context).labelMedium!
-                      .copyWith(color: ColorScheme.of(context).primary),
-                ),
-              ],
+            Expanded(
+              child: Column(
+                mainAxisSize: .min,
+                crossAxisAlignment: .start,
+                children: [
+                  FittedBox(
+                    fit: .scaleDown,
+                    alignment: .bottomStart,
+                    child: Text(
+                      permission.title,
+                      style: TextTheme.of(context).headlineSmall!
+                          .copyWith(color: ColorScheme.of(context).primary),
+                    ),
+                  ),
+                  FittedBox(
+                    fit: .scaleDown,
+                    alignment: .topStart,
+                    child: Text(
+                      permission.subtitle,
+                      style: TextTheme.of(context).labelMedium!
+                          .copyWith(color: ColorScheme.of(context).primary),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const Spacer(),
           ],
         ),
       ),

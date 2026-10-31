@@ -1,9 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_background/flutter_background.dart';
 import 'package:go_router/go_router.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:where/background.dart';
 
 import './landing_page.dart';
@@ -14,18 +12,9 @@ import './permissions_page.dart';
 import './keys.dart';
 import './streams.dart';
 
-void main() async {
+void main() {
   runApp(const WhereApp());
-
-  if (await FlutterBackground.hasPermissions &&
-      await Permission.location.isGranted) {
-    final granted = await FlutterBackground.initialize(
-      androidConfig: androidBackgroundConfig,
-    );
-    if (granted && !FlutterBackground.isBackgroundExecutionEnabled) {
-      await FlutterBackground.enableBackgroundExecution();
-    }
-  }
+  runInBackground();
 }
 
 class WhereApp extends StatefulWidget {
