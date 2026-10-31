@@ -157,16 +157,7 @@ class _MapPageState extends State<MapPage> {
     });
     final store = await Store.fromSettings();
     if (store == null) return;
-    final location = await ShareLocation.fromLocation(fresh: true);
-    if (location == null) return;
-    final mine = await store.getOrCreateMyShare();
-    if (mine == null) return;
-    mine
-      ..locations.add(location)
-      ..updated = DateTime.now().toUtc();
-
-    await mine.save();
-    await store.updateMyShare(mine);
+    await store.upload(fresh: true);
     await refresh();
     setState(() {
       isUploading = false;

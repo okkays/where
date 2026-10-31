@@ -1,9 +1,6 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
 import 'package:github/github.dart';
-import 'package:latlong2/latlong.dart';
-import 'package:location/location.dart';
 
 import './share.dart';
 import './settings.dart';
@@ -11,6 +8,8 @@ import './settings.dart';
 part './github_store.dart';
 
 enum TokenStatus { valid, invalid, pending }
+
+final _maxLocations = 20;
 
 abstract class Store {
   final String token;
@@ -30,6 +29,23 @@ abstract class Store {
   Future<void> updateMyShare(Share share);
 
   Future<Duration> getRefreshInterval();
+
+  Future<void> upload({required bool fresh}) async {
+    final location = await ShareLocation.fromLocation(fresh: fresh);
+    if (location == null) return;
+    final mine = await getOrCreateMyShare();
+    if (mine == null) return;
+    mine
+      ..locations.add(location)
+      ..updated = DateTime.now().toUtc();
+
+    if (mine.locations.length > _maxLocations) {
+      mine.locations.removeRange(0, mine.locations.length - _maxLocations);
+    }
+
+    await mine.save();
+    await updateMyShare(mine);
+  }
 
   Future<void> refreshSharesFromStore() async {
     final settings = await Settings.getSingleton();

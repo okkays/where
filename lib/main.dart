@@ -14,7 +14,8 @@ import './streams.dart';
 
 void main() {
   runApp(const WhereApp());
-  runInBackground();
+  startBackground();
+  startSingletonTimer();
 }
 
 class WhereApp extends StatefulWidget {

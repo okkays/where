@@ -16,21 +16,11 @@ Future<Database> openSettingsDatabase() async {
             token TEXT NOT NULL,
             storage TEXT,
             friends TEXT NOT NULL,
-            background INTEGER DEFAULT 0
+            background INTEGER NOT NULL
           )''');
     },
     onUpgrade: (db, oldVersion, newVersion) async {
-      if (oldVersion <= 6) {
-        await databaseFactory.deleteDatabase('settings.db');
-        return;
-      }
-      final batch = db.batch();
-      if (oldVersion <= 7) {
-        batch.execute(
-          '''ALTER TABLE settings ADD COLUMN background INTEGER DEFAULT 0''',
-        );
-      }
-      batch.commit();
+      await databaseFactory.deleteDatabase('settings.db');
     },
     version: 7,
   );
@@ -70,6 +60,7 @@ class Settings {
       'token': token,
       'storage': storage,
       'friends': jsonEncode(friends),
+      'background': background ? 1 : 0,
     };
   }
 

@@ -98,8 +98,7 @@ class _ToggleService extends _Action {
         );
       }
       notifyListeners();
-      settings.background = false;
-      await settings.save();
+      print('No permissions, disabling background');
       return false;
     }
 
@@ -109,9 +108,20 @@ class _ToggleService extends _Action {
       notifyListeners();
       settings.background = false;
       await settings.save();
+      print('Toggling off background');
       return false;
     }
 
+    final initialized = await FlutterBackground.initialize();
+    if (!initialized) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: const Text('Unable to initialize plugin.')),
+        );
+      }
+      print('Background failed initialize');
+      return false;
+    }
     final enabled = await FlutterBackground.enableBackgroundExecution();
 
     if (!enabled) {
@@ -122,8 +132,7 @@ class _ToggleService extends _Action {
           SnackBar(content: const Text('Something went wrong...')),
         );
       }
-      settings.background = false;
-      await settings.save();
+      print('Background failed enable');
       return false;
     }
 
@@ -131,6 +140,7 @@ class _ToggleService extends _Action {
     notifyListeners();
     settings.background = true;
     await settings.save();
+    startSingletonTimer();
     return true;
   }
 

@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter_background/flutter_background.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:where/settings.dart';
+import 'package:where/store.dart';
 
 final androidBackgroundConfig = FlutterBackgroundAndroidConfig(
   notificationTitle: "Where Location Sharing",
@@ -13,18 +16,42 @@ final androidBackgroundConfig = FlutterBackgroundAndroidConfig(
   enableWifiLock: false,
 );
 
-Future<void> runInBackground() async {
+final _backgroundDuration = Duration(minutes: 10);
+
+Timer? backgroundTimer;
+
+void startSingletonTimer() {
+  if (backgroundTimer != null && backgroundTimer!.isActive) return;
+  backgroundTimer = Timer.periodic(_backgroundDuration, (timer) async {
+    final settings = await Settings.getSingleton();
+    print('Uploading in background ${settings.background}...');
+    if (!settings.background) return;
+
+    final store = await Store.fromSettings();
+    if (store == null) return;
+    await store.upload(fresh: false);
+    print('Uploaded!');
+  });
+}
+
+Future<void> startBackground() async {
+  if (FlutterBackground.isBackgroundExecutionEnabled) return; // already running
+
+  print('Starting background service...');
   final settings = await Settings.getSingleton();
-
   if (!settings.background) return;
+  print('Background setting enabled');
+  if (!await FlutterBackground.hasPermissions) return;
+  print('Has background permissions');
+  if (!await Permission.location.isGranted) return;
+  print('Has location permissions');
 
-  if (await FlutterBackground.hasPermissions &&
-      await Permission.location.isGranted) {
-    final granted = await FlutterBackground.initialize(
-      androidConfig: androidBackgroundConfig,
-    );
-    if (granted && !FlutterBackground.isBackgroundExecutionEnabled) {
-      await FlutterBackground.enableBackgroundExecution();
-    }
-  }
+  final granted = await FlutterBackground.initialize(
+    androidConfig: androidBackgroundConfig,
+  );
+  if (!granted) return;
+  print('Initialized background');
+
+  await FlutterBackground.enableBackgroundExecution();
+  print('Enabled background');
 }
