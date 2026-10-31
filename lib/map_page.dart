@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -8,6 +10,7 @@ import 'package:where/share.dart';
 import 'package:where/store.dart';
 
 const double _avatarSize = 40;
+const Duration updateDuration = Duration(seconds: 10);
 
 class MapPage extends StatefulWidget {
   const MapPage({super.key});
@@ -28,10 +31,19 @@ class _MapPageState extends State<MapPage> {
 
   MapController controller = MapController();
 
+  late Timer updateTimer;
+
   @override
   void initState() {
+    updateTimer = Timer.periodic(updateDuration, (timer) => refresh());
     initAsync();
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    updateTimer.cancel();
+    super.dispose();
   }
 
   Future<void> initAsync() async {
