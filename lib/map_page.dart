@@ -63,28 +63,48 @@ class _MapPageState extends State<MapPage> {
     final List<Polyline> newPolylines = [];
     final List<Marker> newMarkers = [];
     final List<LatLng> newCoordinates = [];
-    await Share.iterateOverDb().forEach((s) {
-      print(s);
-      if (s.locations.isEmpty) return;
-      final sortedLocations = s.locations.sorted(
+    await Share.iterateOverDb().forEach((share) {
+      print(share);
+      if (share.locations.isEmpty) return;
+      final sortedLocations = share.locations.sorted(
         (l, r) => r.timestamp.compareTo(l.timestamp),
       );
-      final color = colors.containsKey(s.storage)
-          ? colors[s.storage]
+      final color = colors.containsKey(share.storage)
+          ? colors[share.storage]
           : Colors.grey;
 
       newMarkers.add(
         Marker(
           point: sortedLocations.first.location,
-          width: _avatarSize,
-          height: _avatarSize,
-          child: CircleAvatar(
-            backgroundColor: color,
-            child: Icon(
-              Icons.person_pin_circle,
-              size: _avatarSize,
-              color: Colors.white,
-            ),
+          width: _avatarSize * 4,
+          height: _avatarSize * 3,
+          child: Column(
+            spacing: 2,
+            crossAxisAlignment: .center,
+            mainAxisAlignment: .center,
+            children: [
+              CircleAvatar(
+                backgroundColor: color,
+                child: Icon(
+                  Icons.person_pin_circle,
+                  size: _avatarSize,
+                  color: Colors.white,
+                ),
+              ),
+              DecoratedBox(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: .all(.circular(5)),
+                ),
+                child: Padding(
+                  padding: .all(4),
+                  child: Text(
+                    share.name,
+                    style: TextStyle(color: Colors.black),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       );
