@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:github/github.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:location/location.dart';
 
 import './share.dart';
 import './settings.dart';
@@ -24,6 +26,8 @@ abstract class Store {
   /// Gets a share for the current user.
   /// Only works if the token is valid and we're able to reach the storage provider.
   Future<Share?> getOrCreateMyShare();
+
+  Future<void> updateMyShare(Share share);
 
   Future<Duration> getRefreshInterval();
 

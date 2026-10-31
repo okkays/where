@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:latlong2/latlong.dart';
+import 'package:location/location.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
@@ -45,6 +46,20 @@ class ShareLocation {
     return ShareLocation(location: location, timestamp: timestamp);
   }
 
+  static Future<ShareLocation?> fromLocation({required bool fresh}) async {
+    final location = Location();
+    final data = fresh
+        ? await location.getLocation()
+        : await location.getLastKnownLocation();
+
+    if (data == null) return null;
+
+    return ShareLocation(
+      location: LatLng(data.latitude, data.longitude),
+      timestamp: DateTime.now().toUtc(),
+    );
+  }
+
   // Formatted as 'some.lat,some.long|dddd-yy-mm hh:mm:ssZ'
   String toDb() {
     return '${location.latitude},${location.longitude}|${timestamp.toUtc().toString()}';
@@ -62,9 +77,9 @@ class Share {
   bool isNew;
 
   @override
-    String toString() {
-      return '$name: $storage';
-    }
+  String toString() {
+    return '$name: $storage';
+  }
 
   Share({
     required this.name,

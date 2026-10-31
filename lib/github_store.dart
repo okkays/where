@@ -33,6 +33,20 @@ class GithubStore extends Store {
   }
 
   @override
+  Future<void> updateMyShare(Share share) async {
+    if (github.auth.isAnonymous) return;
+    final settings = await Settings.getSingleton();
+    final uuidFilename = '${settings.uuid}$filename';
+
+    if (settings.storage == null || settings.storage!.isEmpty) return;
+
+    await github.gists.editGist(
+      share.storage,
+      files: {uuidFilename: jsonEncode(share.toDb())},
+    );
+  }
+
+  @override
   Future<Share?> getOrCreateMyShare() async {
     if (github.auth.isAnonymous) return null;
     final settings = await Settings.getSingleton();
@@ -50,12 +64,13 @@ class GithubStore extends Store {
         ..storage = existing?.id ?? '';
     }
 
+    final shareLocation = await ShareLocation.fromLocation(fresh: false);
     final newShare = Share(
       name: settings.username,
       image: settings.image,
       storage: '',
       isMine: true,
-      locations: [],
+      locations: shareLocation == null ? [] : [shareLocation],
     );
     final newGist = await github.gists.createGist(
       {uuidFilename: jsonEncode(newShare.toDb())},
