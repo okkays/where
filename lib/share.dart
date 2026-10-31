@@ -9,8 +9,8 @@ Future<Database> openShareDatabase() async {
     join(await getDatabasesPath(), 'share.db'),
     onCreate: (db, version) {
       return db.execute('''CREATE TABLE share(
-            name TEXT PRIMARY KEY,
-            storage TEXT NOT NULL,
+            storage TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
             image TEXT NOT NULL,
             locations TEXT NOT NULL,
             is_mine INTEGER NOT NULL,
@@ -20,7 +20,7 @@ Future<Database> openShareDatabase() async {
     onUpgrade: (_, _, _) async {
       await databaseFactory.deleteDatabase('share.db');
     },
-    version: 1,
+    version: 3,
   );
 }
 
@@ -60,6 +60,11 @@ class Share {
   DateTime updated;
   static Database? _db;
   bool isNew;
+
+  @override
+    String toString() {
+      return '$name: $storage';
+    }
 
   Share({
     required this.name,
@@ -112,10 +117,40 @@ class Share {
     );
   }
 
+  static Future<void> batch({
+    List<Share> insertOrUpdate = const [],
+    List<String> delete = const [],
+  }) async {
+    final db = await getSingletonDb();
+    final batch = db.batch();
+
+    for (var share in insertOrUpdate) {
+      batch.insert(
+        'share',
+        share.toDb(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+
+    for (var storage in delete) {
+      batch.delete('share', where: 'storage = ?', whereArgs: [storage]);
+    }
+
+    await batch.commit(noResult: true);
+  }
+
   static Future<List<Share>> getFromDb() async {
     final db = await getSingletonDb();
     final List<Map<String, Object?>> shares = await db.query('share');
     return shares.map(Share.fromDb).toList();
+  }
+
+  static Stream<Share> iterateOverDb() async* {
+    final db = await getSingletonDb();
+    final cursor = await db.queryCursor('share', orderBy: 'updated ASC');
+    while (await cursor.moveNext()) {
+      yield Share.fromDb(cursor.current);
+    }
   }
 
   static Future<Share?> getMine() async {

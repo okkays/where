@@ -113,6 +113,8 @@ class _SharingPageState extends State<SharingPage> {
       isSaved = .saved;
     });
 
+    await store?.refreshSharesFromStore();
+
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(

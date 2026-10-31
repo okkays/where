@@ -13,11 +13,19 @@ class GithubStore extends Store {
   }
 
   @override
+  Future<Duration> getRefreshInterval() async {
+    // Realistically this will never exceed the API limit.
+    // ...right?
+    return Future.value(Duration(minutes: 1));
+  }
+
+  @override
   checkTokenStatus() async {
     if (token.trim().isEmpty) {
       return .pending;
     }
     final rates = await github.misc.getRateLimit();
+    print('RATES: ${rates.remaining} / ${rates.limit}');
     if ((rates.limit ?? 0) < 100) {
       return .invalid;
     }
@@ -68,7 +76,7 @@ class GithubStore extends Store {
   }
 
   @override
-  Future<Share?> shareFromId(String id) async {
+  Future<Share?> shareFromId(String id, {bool isMine = false}) async {
     Gist? gist;
     try {
       gist = await github.gists.getGist(id);
@@ -94,6 +102,6 @@ class GithubStore extends Store {
     final shareJson = jsonDecode(shareRaw);
     return Share.fromDb(shareJson)
       ..storage = id
-      ..isMine = false;
+      ..isMine = isMine;
   }
 }
