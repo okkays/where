@@ -114,7 +114,7 @@ class _ToggleService extends _Action {
 
     final initialized = await FlutterBackground.initialize(
       androidConfig: androidBackgroundConfig,
-        );
+    );
     if (!initialized) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -199,44 +199,46 @@ class _PermissionsPageState extends State<PermissionsPage> {
   }
 
   Widget buildPermission(BuildContext context, _Action permission) {
-    return Expanded(
-      flex: 1,
-      child: ElevatedButton(
-        key: Key('permissions.${permission.title}'),
-        onPressed: () async {
-          final result = await permission.request(context);
-          if (!result) {}
-        },
-        child: Row(
-          mainAxisAlignment: .start,
-          crossAxisAlignment: .center,
-          spacing: 10,
-          children: [
-            Padding(
-              padding: EdgeInsetsGeometry.fromLTRB(10, 0, 10, 0),
-              child: ListenableBuilder(
-                listenable: permission,
-                builder: (context, widget) => permission.icon,
-              ),
+    return ElevatedButton(
+      key: Key('permissions.${permission.title}'),
+      onPressed: () async {
+        final result = await permission.request(context);
+        if (!result) {}
+      },
+      child: Row(
+        mainAxisAlignment: .start,
+        crossAxisAlignment: .center,
+        spacing: 10,
+        children: [
+          Padding(
+            padding: EdgeInsetsGeometry.fromLTRB(10, 0, 10, 0),
+            child: ListenableBuilder(
+              listenable: permission,
+              builder: (context, widget) => permission.icon,
             ),
-            const VerticalDivider(width: 1),
-            Expanded(
+          ),
+          const VerticalDivider(width: 1),
+          Expanded(
+            child: Padding(
+              padding: .fromLTRB(0, 10, 0, 10),
               child: Column(
                 mainAxisSize: .min,
                 crossAxisAlignment: .start,
                 children: [
-                  FittedBox(
-                    fit: .scaleDown,
-                    alignment: .bottomStart,
-                    child: Text(
-                      permission.title,
-                      style: TextTheme.of(context).headlineSmall!
-                          .copyWith(color: ColorScheme.of(context).primary),
+                  Padding(
+                    padding: .only(right: 20),
+                    child: FittedBox(
+                      fit: .scaleDown,
+                      child: Text(
+                        permission.title,
+                        style: TextTheme.of(context).headlineSmall!
+                            .copyWith(color: ColorScheme.of(context).primary),
+                      ),
                     ),
                   ),
-                  FittedBox(
-                    fit: .scaleDown,
-                    alignment: .topStart,
+                  Padding(
+                    padding: .only(right: 20),
+
                     child: Text(
                       permission.subtitle,
                       style: TextTheme.of(context).labelMedium!
@@ -246,8 +248,8 @@ class _PermissionsPageState extends State<PermissionsPage> {
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -262,23 +264,26 @@ class _PermissionsPageState extends State<PermissionsPage> {
           top: 40,
           bottom: 40,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          spacing: 20,
-          children: [
-            ...allPermissions.map((p) => buildPermission(context, p)),
-            Column(
-              children: [
-                Text(
-                  "ℹ️ Once enabled, background location will be uploaded every ${backgroundDuration.inMinutes} minutes. This might not happen if the phone doesn't have internet access, is on battery saver mode, etc.",
-                ),
-                Text(
-                  "You can also send a manual, fresh location update by going to the Map page and choosing the cloud upload icon.",
-                ),
-              ],
-            ),
-          ],
+        child: SingleChildScrollView(
+          child: Wrap(
+            runAlignment: .center,
+            alignment: .center,
+            spacing: 20,
+            runSpacing: 20,
+            children: [
+              Column(
+                children: [
+                  Text(
+                    "ℹ️ Once enabled, background location will be uploaded every ${backgroundDuration.inMinutes} minutes. This might not happen if the phone doesn't have internet access, is on battery saver mode, etc.",
+                  ),
+                  Text(
+                    "You can also send a manual, fresh location update by going to the Map page and choosing the cloud upload icon.",
+                  ),
+                ],
+              ),
+              ...allPermissions.map((p) => buildPermission(context, p)),
+            ],
+          ),
         ),
       ),
     );
