@@ -112,7 +112,9 @@ class _ToggleService extends _Action {
       return false;
     }
 
-    final initialized = await FlutterBackground.initialize();
+    final initialized = await FlutterBackground.initialize(
+      androidConfig: androidBackgroundConfig,
+        );
     if (!initialized) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -168,6 +170,11 @@ class _PermissionsPageState extends State<PermissionsPage> {
       permission: Permission.locationAlways,
       title: 'Location always',
       subtitle: 'For all-the-time sharing',
+    ),
+    _PermissionAction(
+      permission: Permission.notification,
+      title: 'Notifications',
+      subtitle: "For all-the-time sharing, so the app doesn't die",
     ),
     _BackgroundAction(
       title: 'Background permission',
@@ -249,13 +256,17 @@ class _PermissionsPageState extends State<PermissionsPage> {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsetsGeometry.only(left: 20, right: 20),
+        padding: const EdgeInsetsGeometry.only(
+          left: 20,
+          right: 20,
+          top: 40,
+          bottom: 40,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           spacing: 40,
           children: [
-            const Spacer(),
             ...allPermissions.map((p) => buildPermission(context, p)),
             Column(
               children: [
@@ -267,7 +278,6 @@ class _PermissionsPageState extends State<PermissionsPage> {
                 ),
               ],
             ),
-            const Spacer(),
           ],
         ),
       ),
