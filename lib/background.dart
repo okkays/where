@@ -16,13 +16,13 @@ final androidBackgroundConfig = FlutterBackgroundAndroidConfig(
   enableWifiLock: false,
 );
 
-final _backgroundDuration = Duration(minutes: 15);
+final backgroundDuration = Duration(minutes: 15);
 
 Timer? backgroundTimer;
 
 void startSingletonTimer() {
   if (backgroundTimer != null && backgroundTimer!.isActive) return;
-  backgroundTimer = Timer.periodic(_backgroundDuration, (timer) async {
+  backgroundTimer = Timer.periodic(backgroundDuration, (timer) async {
     final settings = await Settings.getSingleton();
     print('Uploading in background ${settings.background}...');
     if (!settings.background) return;
