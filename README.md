@@ -20,7 +20,7 @@ This application has a few workflows:
 
 The app needs a token - this is a github personal access token with Gist permissions. To get one:
 
-- https://github.com/settings/personal-access-tokens/new
+- https://github.com/settings/personal-access-tokens/new?name=Where%20location%20sharing%20token&description=A%20personal%20access%20token%20for%20the%20where%20app,%20which%20grants%20only%20gist%20permissions&expires_in=none&gists=write
 
 Here's the config to use when creating it - it only needs Gist access:
 
