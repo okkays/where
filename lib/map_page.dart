@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:where/settings.dart';
 import 'package:where/share.dart';
 import 'package:where/store.dart';
+import 'package:where/util.dart';
 
 const double _avatarSize = 40;
 const Duration updateDuration = Duration(seconds: 10);
@@ -93,6 +94,35 @@ class _MapPageState extends State<MapPage> {
       final color = colors.containsKey(share.storage)
           ? colors[share.storage]
           : Colors.grey;
+
+      newMarkers.addAll(
+        sortedLocations.getRange(1, sortedLocations.length).map((location) {
+          return Marker(
+            point: location.location,
+            width: _avatarSize * 3,
+            height: _avatarSize * 1,
+            child: Column(
+              crossAxisAlignment: .center,
+              mainAxisAlignment: .center,
+              children: [
+                DecoratedBox(
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: .all(.circular(5)),
+                  ),
+                  child: Padding(
+                    padding: .all(4),
+                    child: Text(
+                      location.timestamp.timeAgo(),
+                      style: TextStyle(color: Colors.black),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      );
 
       newMarkers.add(
         Marker(
