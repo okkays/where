@@ -271,6 +271,7 @@ class _PermissionsPageState extends State<PermissionsPage> {
             spacing: 20,
             runSpacing: 20,
             children: [
+              ...allPermissions.map((p) => buildPermission(context, p)),
               Column(
                 children: [
                   Text(
@@ -281,7 +282,6 @@ class _PermissionsPageState extends State<PermissionsPage> {
                   ),
                 ],
               ),
-              ...allPermissions.map((p) => buildPermission(context, p)),
             ],
           ),
         ),
