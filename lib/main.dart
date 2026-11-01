@@ -30,7 +30,7 @@ class _WhereAppState extends State<WhereApp> {
 
   @override
   void initState() {
-    appBarController = StreamController();
+    appBarController = StreamController.broadcast();
     appBarStream = appBarController.stream;
 
     super.initState();
