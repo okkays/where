@@ -16,7 +16,7 @@ final androidBackgroundConfig = FlutterBackgroundAndroidConfig(
   enableWifiLock: false,
 );
 
-final _backgroundDuration = Duration(minutes: 10);
+final _backgroundDuration = Duration(minutes: 15);
 
 Timer? backgroundTimer;
 

@@ -257,6 +257,16 @@ class _PermissionsPageState extends State<PermissionsPage> {
           children: [
             const Spacer(),
             ...allPermissions.map((p) => buildPermission(context, p)),
+            Column(
+              children: [
+                Text(
+                  "ℹ️ Once enabled, background location will be uploaded every 15 minutes. This might not happen if the phone doesn't have internet access, is on battery saver mode, etc.",
+                ),
+                Text(
+                  "You can also send a manual, fresh location update by going to the Map page and choosing the cloud upload icon.",
+                ),
+              ],
+            ),
             const Spacer(),
           ],
         ),
