@@ -322,6 +322,12 @@ class _SharingPageState extends State<SharingPage> {
                                     child: TextFormField(
                                       controller: controller,
                                       textAlignVertical: .center,
+                                      onChanged: (newValue) {
+                                        friend.storage = newValue;
+                                        setState(() {
+                                          isSaved = .unsaved;
+                                        });
+                                      },
                                       decoration: InputDecoration(
                                         hintText: 'Get this from a friend',
                                         suffixIcon: Wrap(
