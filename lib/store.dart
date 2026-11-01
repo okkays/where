@@ -35,9 +35,19 @@ abstract class Store {
     if (location == null) return;
     final mine = await getOrCreateMyShare();
     if (mine == null) return;
-    mine
-      ..locations.add(location)
-      ..updated = DateTime.now().toUtc();
+
+    // If it's a duplicate, update the time instead of adding a dupe.
+    // This can happen often for stale location fetches.
+    if (mine.locations.isNotEmpty &&
+        mine.locations.last.location == location.location) {
+      mine.locations.last.timestamp = DateTime.now().toUtc();
+      print('Updating old location');
+    } else {
+      mine
+        ..locations.add(location)
+        ..updated = DateTime.now().toUtc();
+      print('Adding new location');
+    }
 
     if (mine.locations.length > _maxLocations) {
       mine.locations.removeRange(0, mine.locations.length - _maxLocations);

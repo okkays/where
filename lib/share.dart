@@ -27,9 +27,9 @@ Future<Database> openShareDatabase() async {
 
 class ShareLocation {
   final LatLng location;
-  final DateTime timestamp;
+  DateTime timestamp;
 
-  const ShareLocation({required this.location, required this.timestamp});
+  ShareLocation({required this.location, required this.timestamp});
 
   // Formatted as 'some.lat,some.long|dddd-yy-mm hh:mm:ssZ'
   factory fromDb(String dbValue) {

@@ -114,7 +114,10 @@ class _MapPageState extends State<MapPage> {
                     padding: .all(4),
                     child: Text(
                       location.timestamp.timeAgo(),
-                      style: TextStyle(color: Colors.black),
+                      style: mounted
+                          ? TextTheme.of(context).labelMedium!
+                                .copyWith(fontStyle: .italic)
+                          : null,
                     ),
                   ),
                 ),
@@ -128,7 +131,7 @@ class _MapPageState extends State<MapPage> {
         Marker(
           point: sortedLocations.first.location,
           width: _avatarSize * 4,
-          height: _avatarSize * 3,
+          height: _avatarSize * 4,
           child: Column(
             spacing: 2,
             crossAxisAlignment: .center,
@@ -151,7 +154,23 @@ class _MapPageState extends State<MapPage> {
                   padding: .all(4),
                   child: Text(
                     share.name,
-                    style: TextStyle(color: Colors.black),
+                    style: mounted ? TextTheme.of(context).labelLarge : null,
+                  ),
+                ),
+              ),
+              DecoratedBox(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: .all(.circular(5)),
+                ),
+                child: Padding(
+                  padding: .all(4),
+                  child: Text(
+                    '(${sortedLocations.first.timestamp.timeAgo()})',
+                    style: mounted
+                        ? TextTheme.of(context).labelMedium!
+                              .copyWith(fontStyle: .italic)
+                        : null,
                   ),
                 ),
               ),
