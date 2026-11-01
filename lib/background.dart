@@ -5,7 +5,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:where/settings.dart';
 import 'package:where/store.dart';
 
-final androidBackgroundConfig = FlutterBackgroundAndroidConfig(
+const androidBackgroundConfig = FlutterBackgroundAndroidConfig(
   notificationTitle: "Where Location Sharing",
   notificationText: "The Where app is sharing your location in the background.",
   notificationImportance: AndroidNotificationImportance.normal,
@@ -16,7 +16,7 @@ final androidBackgroundConfig = FlutterBackgroundAndroidConfig(
   enableWifiLock: false,
 );
 
-final backgroundDuration = Duration(minutes: 15);
+const backgroundDuration = Duration(minutes: 15);
 
 Timer? backgroundTimer;
 

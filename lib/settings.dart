@@ -26,6 +26,8 @@ Future<Database> openSettingsDatabase() async {
   );
 }
 
+enum SaveStatus { saved, saving, unsaved }
+
 class Settings {
   final String name;
   String uuid;
@@ -35,6 +37,7 @@ class Settings {
   String? storage;
   List<String> friends;
   bool background;
+  SaveStatus isSaved;
 
   Database? db;
   static Settings? _singleton;
@@ -47,6 +50,7 @@ class Settings {
     required this.token,
     required this.friends,
     required this.background,
+    required this.isSaved,
     this.storage,
     this.db,
   });
@@ -75,6 +79,7 @@ class Settings {
       storage: dbValue['storage'] as String?,
       background: (dbValue['background'] as int) == 1,
       friends: List<String>.from(jsonDecode(dbValue['friends'] as String)),
+      isSaved: .saved,
     );
   }
 
@@ -119,13 +124,14 @@ class Settings {
 
     return Settings(
       name: 'onlysettings',
-      uuid: Uuid().v4(),
+      uuid: const Uuid().v4(),
       username: '',
       image: '',
       token: '',
       storage: '',
       friends: [],
       background: false,
+      isSaved: .saved,
     );
   }
 }

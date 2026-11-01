@@ -30,5 +30,7 @@ class AppBarStreamSnapshot {
   }
 }
 
+// These should be initialized in main.dart, probably:
 AppBarStreamSnapshot defaultAppBarSnapshot = const AppBarStreamSnapshot();
 late StreamController<AppBarStreamSnapshot> appBarController;
+late StreamController<String> routeChangedController;

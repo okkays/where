@@ -19,8 +19,7 @@ abstract class _Action extends ChangeNotifier {
   _Action({
     required this.title,
     required this.subtitle,
-    this.icon = pendingIcon,
-  });
+  }) : icon = pendingIcon;
 
   Future<bool> request(BuildContext context);
 }
@@ -64,7 +63,7 @@ class _BackgroundAction extends _Action {
     if (!granted) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: const Text('Permission not granted 😔')),
+          const SnackBar(content: Text('Permission not granted 😔')),
         );
       }
       icon = errorIcon;
@@ -94,7 +93,7 @@ class _ToggleService extends _Action {
       icon = offIcon;
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: const Text('Enable permissions above first')),
+          const SnackBar(content: Text('Enable permissions above first')),
         );
       }
       notifyListeners();
@@ -118,7 +117,7 @@ class _ToggleService extends _Action {
     if (!initialized) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: const Text('Unable to initialize plugin.')),
+          const SnackBar(content: Text('Unable to initialize plugin.')),
         );
       }
       print('Background failed initialize');
@@ -131,7 +130,7 @@ class _ToggleService extends _Action {
       notifyListeners();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: const Text('Something went wrong...')),
+          const SnackBar(content: Text('Something went wrong...')),
         );
       }
       print('Background failed enable');
@@ -186,18 +185,6 @@ class _PermissionsPageState extends State<PermissionsPage> {
     ),
   ];
 
-  late final AppLifecycleListener appLifecycleListener;
-
-  @override
-  void initState() {
-    appLifecycleListener = AppLifecycleListener(
-      onResume: () {
-        setState(() {});
-      },
-    );
-    super.initState();
-  }
-
   Widget buildPermission(BuildContext context, _Action permission) {
     return ElevatedButton(
       key: Key('permissions.${permission.title}'),
@@ -211,7 +198,7 @@ class _PermissionsPageState extends State<PermissionsPage> {
         spacing: 10,
         children: [
           Padding(
-            padding: EdgeInsetsGeometry.fromLTRB(10, 0, 10, 0),
+            padding: const EdgeInsetsGeometry.fromLTRB(10, 0, 10, 0),
             child: ListenableBuilder(
               listenable: permission,
               builder: (context, widget) => permission.icon,
@@ -220,13 +207,13 @@ class _PermissionsPageState extends State<PermissionsPage> {
           const VerticalDivider(width: 1),
           Expanded(
             child: Padding(
-              padding: .fromLTRB(0, 10, 0, 10),
+              padding: const .fromLTRB(0, 10, 0, 10),
               child: Column(
                 mainAxisSize: .min,
                 crossAxisAlignment: .start,
                 children: [
                   Padding(
-                    padding: .only(right: 20),
+                    padding: const .only(right: 20),
                     child: FittedBox(
                       fit: .scaleDown,
                       child: Text(
@@ -237,7 +224,7 @@ class _PermissionsPageState extends State<PermissionsPage> {
                     ),
                   ),
                   Padding(
-                    padding: .only(right: 20),
+                    padding: const .only(right: 20),
 
                     child: Text(
                       permission.subtitle,
@@ -277,7 +264,7 @@ class _PermissionsPageState extends State<PermissionsPage> {
                   Text(
                     "ℹ️ Once enabled, background location will be uploaded every ${backgroundDuration.inMinutes} minutes. This might not happen if the phone doesn't have internet access, is on battery saver mode, etc.",
                   ),
-                  Text(
+                  const Text(
                     "You can also send a manual, fresh location update by going to the Map page and choosing the cloud upload icon.",
                   ),
                 ],

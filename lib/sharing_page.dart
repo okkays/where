@@ -15,35 +15,43 @@ class SharingPage extends StatefulWidget {
   State<StatefulWidget> createState() => _SharingPageState();
 }
 
-enum _SaveStatus { saved, saving, unsaved }
-
 class _SharingPageState extends State<SharingPage> {
   final Future<Settings> futureSettings = Settings.getSingleton();
 
   List<Share> friends = [];
   bool isFriendsLoading = true;
 
-  Icon tokenStatusIcon = Icon(Icons.hourglass_empty, color: Colors.orange);
+  Icon tokenStatusIcon = const Icon(Icons.hourglass_empty, color: Colors.orange);
+  final nameController = TextEditingController();
   final storageController = TextEditingController();
   final tokenController = TextEditingController();
   final Map<Share, TextEditingController> newFriendControllers = {};
 
-  _SaveStatus isSaved = .saved;
+  @override
+  void dispose() {
+    nameController.dispose();
+    storageController.dispose();
+    tokenController.dispose();
+    for (var controller in newFriendControllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
 
   Future<Icon> checkTokenStatus() async {
     final store = await Store.fromSettings();
 
     if (store == null) {
-      return Icon(Icons.help_outlined, color: Colors.purple);
+      return const Icon(Icons.help_outlined, color: Colors.purple);
     }
 
     switch (await store.checkTokenStatus()) {
       case .valid:
-        return Icon(Icons.check, color: Colors.green);
+        return const Icon(Icons.check, color: Colors.green);
       case .invalid:
-        return Icon(Icons.error_outline, color: Colors.red);
+        return const Icon(Icons.error_outline, color: Colors.red);
       default:
-        return Icon(Icons.hourglass_top, color: Colors.orange);
+        return const Icon(Icons.hourglass_top, color: Colors.orange);
     }
   }
 
@@ -76,7 +84,7 @@ class _SharingPageState extends State<SharingPage> {
                 right: 100,
                 bottom: MediaQuery.of(context).viewInsets.bottom + 20,
               ),
-              duration: Duration(days: 365),
+              duration: const Duration(days: 365),
               content: const Text('A friend ID was invalid!'),
               showCloseIcon: true,
             ),
@@ -90,7 +98,7 @@ class _SharingPageState extends State<SharingPage> {
 
   Future<void> handleSave(BuildContext context, Settings settings) async {
     setState(() {
-      isSaved = .saving;
+      settings.isSaved = .saving;
     });
     final newIcon = await checkTokenStatus();
     final store = await Store.fromSettings();
@@ -112,7 +120,7 @@ class _SharingPageState extends State<SharingPage> {
     setState(() {
       tokenStatusIcon = newIcon;
       friends = inflatedFriends;
-      isSaved = .saved;
+      settings.isSaved = .saved;
     });
 
     await store?.refreshSharesFromStore();
@@ -136,6 +144,7 @@ class _SharingPageState extends State<SharingPage> {
   Future<void> initWithSettings() async {
     final settings = await futureSettings;
     setState(() {
+      nameController.value = .new(text: settings.username);
       storageController.value = .new(text: settings.storage ?? '');
       tokenController.value = .new(text: settings.token);
     });
@@ -160,12 +169,12 @@ class _SharingPageState extends State<SharingPage> {
       future: futureSettings,
       builder: (context, snapshot) {
         final data = snapshot.data;
-        if (data == null) return Center(child: Text('loading...'));
+        if (data == null) return const Center(child: Text('loading...'));
         final hasId = data.storage?.isNotEmpty ?? false;
         return Stack(
           children: [
             Padding(
-              padding: EdgeInsetsGeometry.all(10),
+              padding: const EdgeInsetsGeometry.all(10),
               child: SingleChildScrollView(
                 child: Column(
                   spacing: 10,
@@ -190,7 +199,7 @@ class _SharingPageState extends State<SharingPage> {
                                     text: 'https://github.com/settings/personal-access-tokens/new',
                                     recognizer: TapGestureRecognizer()
                                       ..onTap = () async {
-                                        final url =
+                                        const url =
                                             'https://github.com/settings/personal-access-tokens/new?name=Where%20location%20sharing%20token&description=A%20personal%20access%20token%20for%20the%20where%20app,%20which%20grants%20only%20gist%20permissions&expires_in=none&gists=write';
                                         await launchUrlString(url);
                                       },
@@ -209,14 +218,14 @@ class _SharingPageState extends State<SharingPage> {
                         Text('Name:', style: TextTheme.of(context).titleMedium),
                         Expanded(
                           child: TextFormField(
+                            controller: nameController,
                             textAlignVertical: .center,
-                            decoration: InputDecoration(
+                            decoration: const InputDecoration(
                               hintText: 'How to appear to others',
                             ),
-                            initialValue: data.username,
                             onChanged: (newValue) {
                               setState(() {
-                                isSaved = .unsaved;
+                                data.isSaved = .unsaved;
                               });
                               data.username = newValue;
                             },
@@ -242,7 +251,7 @@ class _SharingPageState extends State<SharingPage> {
                                   IconButton(
                                     onPressed: () {
                                       setState(() {
-                                        isSaved = .unsaved;
+                                        data.isSaved = .unsaved;
                                       });
                                       Clipboard.getData('text/plain').then((d) {
                                         final newValue = d?.text ?? '';
@@ -252,10 +261,10 @@ class _SharingPageState extends State<SharingPage> {
                                         );
                                       });
                                     },
-                                    icon: Icon(Icons.paste),
+                                    icon: const Icon(Icons.paste),
                                   ),
                                   Padding(
-                                    padding: .all(12),
+                                    padding: const .all(12),
                                     child: tokenStatusIcon,
                                   ),
                                 ],
@@ -264,7 +273,7 @@ class _SharingPageState extends State<SharingPage> {
                             onChanged: (newValue) {
                               data.token = newValue;
                               setState(() {
-                                isSaved = .unsaved;
+                                data.isSaved = .unsaved;
                               });
                             },
                           ),
@@ -290,23 +299,23 @@ class _SharingPageState extends State<SharingPage> {
                                     ClipboardData(text: data.storage ?? ''),
                                   );
                                 },
-                                icon: Icon(Icons.copy),
+                                icon: const Icon(Icons.copy),
                               ),
                             ),
                           ),
                         ),
                       ],
                     ),
-                    Text(
+                    const Text(
                       'To share your location, copy the ID above and send it to people you know. To add others to your map, click "Add friend" below and paste in their ID, then click save.',
                     ),
-                    Divider(),
+                    const Divider(),
                     Text(
                       'Your friends',
                       style: TextTheme.of(context).titleMedium,
                     ),
                     ...(isFriendsLoading
-                        ? [Text('loading...')]
+                        ? [const Text('loading...')]
                         : friends.map((friend) {
                             if (friend.isNew) {
                               // This is a new friend to be edited
@@ -325,7 +334,7 @@ class _SharingPageState extends State<SharingPage> {
                                       onChanged: (newValue) {
                                         friend.storage = newValue;
                                         setState(() {
-                                          isSaved = .unsaved;
+                                          data.isSaved = .unsaved;
                                         });
                                       },
                                       decoration: InputDecoration(
@@ -335,7 +344,7 @@ class _SharingPageState extends State<SharingPage> {
                                             IconButton(
                                               onPressed: () {
                                                 setState(() {
-                                                  isSaved = .unsaved;
+                                                  data.isSaved = .unsaved;
                                                 });
                                                 Clipboard.getData('text/plain')
                                                     .then((d) {
@@ -347,16 +356,16 @@ class _SharingPageState extends State<SharingPage> {
                                                       friend.storage = newValue;
                                                     });
                                               },
-                                              icon: Icon(Icons.paste),
+                                              icon: const Icon(Icons.paste),
                                             ),
                                             IconButton(
                                               onPressed: () {
                                                 setState(() {
-                                                  isSaved = .unsaved;
+                                                  data.isSaved = .unsaved;
                                                   friends.remove(friend);
                                                 });
                                               },
-                                              icon: Icon(Icons.delete),
+                                              icon: const Icon(Icons.delete),
                                               color: Colors.redAccent,
                                             ),
                                           ],
@@ -390,16 +399,16 @@ class _SharingPageState extends State<SharingPage> {
                                                 ),
                                               );
                                             },
-                                            icon: Icon(Icons.copy),
+                                            icon: const Icon(Icons.copy),
                                           ),
                                           IconButton(
                                             onPressed: () {
                                               setState(() {
-                                                isSaved = .unsaved;
+                                                data.isSaved = .unsaved;
                                                 friends.remove(friend);
                                               });
                                             },
-                                            icon: Icon(Icons.delete),
+                                            icon: const Icon(Icons.delete),
                                             color: Colors.redAccent,
                                           ),
                                         ],
@@ -414,7 +423,7 @@ class _SharingPageState extends State<SharingPage> {
                       spacing: 10,
                       children: [
                         ElevatedButton.icon(
-                          icon: Icon(Icons.person_add, color: Colors.green),
+                          icon: const Icon(Icons.person_add, color: Colors.green),
                           label: Text(
                             'Add friend',
                             style: TextTheme.of(context).titleMedium,
@@ -439,7 +448,7 @@ class _SharingPageState extends State<SharingPage> {
                         ),
                         ...(!hasId
                             ? [
-                                Flexible(
+                                const Flexible(
                                   child: Text(
                                     'Enter a name and token to add friends.',
                                     style: TextStyle(
@@ -460,19 +469,19 @@ class _SharingPageState extends State<SharingPage> {
               bottom: MediaQuery.of(context).viewInsets.bottom + 40,
               right: 20,
               child: FloatingActionButton(
-                onPressed: isSaved == .unsaved
+                onPressed: data.isSaved == .unsaved
                     ? () {
                         handleSave(context, data);
                       }
                     : null,
-                backgroundColor: (switch (isSaved) {
+                backgroundColor: (switch (data.isSaved) {
                   .saved => Colors.grey.shade300,
                   .unsaved => null,
                   .saving => Colors.orange.shade100,
                 }),
-                child: (switch (isSaved) {
+                child: (switch (data.isSaved) {
                   .saved => Icon(Icons.save, color: Colors.grey.shade600),
-                  .unsaved => Badge(smallSize: 10, child: Icon(Icons.save)),
+                  .unsaved => const Badge(smallSize: 10, child: Icon(Icons.save)),
                   .saving => Icon(
                     Icons.hourglass_top,
                     color: Colors.orange.shade800,

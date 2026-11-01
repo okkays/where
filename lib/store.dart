@@ -9,7 +9,7 @@ part './github_store.dart';
 
 enum TokenStatus { valid, invalid, pending }
 
-final _maxLocations = 20;
+const _maxLocations = 20;
 
 abstract class Store {
   final String token;

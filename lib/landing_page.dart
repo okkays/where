@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import './streams.dart';
+
 class LandingPage extends StatelessWidget {
   const LandingPage({super.key});
 
@@ -19,7 +21,10 @@ class LandingPage extends StatelessWidget {
               key: const Key('landing.map'),
               flex: 1,
               child: ElevatedButton(
-                onPressed: () => context.go('/map'),
+                onPressed: () {
+                  routeChangedController.sink.add('/map');
+                  context.go('/map');
+                },
                 child: Row(
                   mainAxisAlignment: .start,
                   crossAxisAlignment: .center,
@@ -45,7 +50,10 @@ class LandingPage extends StatelessWidget {
               flex: 1,
               child: ElevatedButton(
                 key: const Key('landing.sharing'),
-                onPressed: () => context.go('/sharing'),
+                onPressed: () {
+                  routeChangedController.sink.add('/sharing');
+                  context.go('/sharing');
+                },
                 child: Row(
                   mainAxisAlignment: .start,
                   crossAxisAlignment: .center,
@@ -71,7 +79,10 @@ class LandingPage extends StatelessWidget {
               flex: 1,
               child: ElevatedButton(
                 key: const Key('landing.permissions'),
-                onPressed: () => context.go('/permissions'),
+                onPressed: () {
+                  routeChangedController.sink.add('/permissions');
+                  context.go('/permissions');
+                },
                 child: Row(
                   mainAxisAlignment: .start,
                   crossAxisAlignment: .center,
@@ -93,7 +104,7 @@ class LandingPage extends StatelessWidget {
                 ),
               ),
             ),
-            Text(
+            const Text(
               "ℹ️ To get set up, start with Permissions, then go to Sharing. Once you're done, use the Map to see location history of yourself and friends.",
             ),
             const Spacer(),

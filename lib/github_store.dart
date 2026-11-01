@@ -16,7 +16,7 @@ class GithubStore extends Store {
   Future<Duration> getRefreshInterval() async {
     // Realistically this will never exceed the API limit.
     // ...right?
-    return Future.value(Duration(minutes: 1));
+    return Future.value(const Duration(minutes: 1));
   }
 
   @override

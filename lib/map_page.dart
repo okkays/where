@@ -30,7 +30,7 @@ class _MapPageState extends State<MapPage> {
   List<Share> shares = [];
   Map<String, Color> colors = {};
 
-  CameraFit fit = CameraFit.coordinates(
+  CameraFit fit = const CameraFit.coordinates(
     coordinates: [LatLng(43.18449, -109.65367)],
     maxZoom: 12,
   );
@@ -111,7 +111,7 @@ class _MapPageState extends State<MapPage> {
                     borderRadius: .all(.circular(5)),
                   ),
                   child: Padding(
-                    padding: .all(4),
+                    padding: const .all(4),
                     child: Text(
                       location.timestamp.timeAgo(),
                       style: mounted
@@ -139,7 +139,7 @@ class _MapPageState extends State<MapPage> {
             children: [
               CircleAvatar(
                 backgroundColor: color,
-                child: Icon(
+                child: const Icon(
                   Icons.person_pin_circle,
                   size: _avatarSize,
                   color: Colors.white,
@@ -151,7 +151,7 @@ class _MapPageState extends State<MapPage> {
                   borderRadius: .all(.circular(5)),
                 ),
                 child: Padding(
-                  padding: .all(4),
+                  padding: const .all(4),
                   child: Text(
                     share.name,
                     style: mounted ? TextTheme.of(context).labelLarge : null,
@@ -164,7 +164,7 @@ class _MapPageState extends State<MapPage> {
                   borderRadius: .all(.circular(5)),
                 ),
                 child: Padding(
-                  padding: .all(4),
+                  padding: const .all(4),
                   child: Text(
                     '(${sortedLocations.first.timestamp.timeAgo()})',
                     style: mounted
@@ -219,7 +219,7 @@ class _MapPageState extends State<MapPage> {
       mapController: controller,
       options: MapOptions(
         initialCameraFit: fit,
-        interactionOptions: InteractionOptions(
+        interactionOptions: const InteractionOptions(
           flags: InteractiveFlag.pinchZoom | InteractiveFlag.drag,
         ),
       ),
@@ -251,7 +251,7 @@ class _MapPageState extends State<MapPage> {
                 backgroundColor: isUploading ? Colors.orange.shade100 : null,
                 child: isUploading
                     ? Icon(Icons.hourglass_top, color: Colors.orange.shade800)
-                    : Icon(Icons.cloud_upload),
+                    : const Icon(Icons.cloud_upload),
               ),
               FloatingActionButton(
                 heroTag: null,
@@ -259,12 +259,12 @@ class _MapPageState extends State<MapPage> {
                 onPressed: isRefreshing ? null : refresh,
                 child: isRefreshing
                     ? Icon(Icons.hourglass_top, color: Colors.orange.shade800)
-                    : Icon(Icons.refresh),
+                    : const Icon(Icons.refresh),
               ),
               FloatingActionButton(
                 heroTag: null,
                 onPressed: refit,
-                child: Icon(Icons.fit_screen),
+                child: const Icon(Icons.fit_screen),
               ),
             ],
           ),
