@@ -1,5 +1,7 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 import './share.dart';
 import './store.dart';
@@ -159,7 +161,7 @@ class _SharingPageState extends State<SharingPage> {
       builder: (context, snapshot) {
         final data = snapshot.data;
         if (data == null) return Center(child: Text('loading...'));
-        final hasId = data.storage?.isEmpty ?? true;
+        final hasId = data.storage?.isNotEmpty ?? false;
         return Stack(
           children: [
             Padding(
@@ -169,6 +171,38 @@ class _SharingPageState extends State<SharingPage> {
                   spacing: 10,
                   children: [
                     Text('About you', style: TextTheme.of(context).titleMedium),
+                    ...(hasId
+                        ? []
+                        : [
+                            RichText(
+                              text: TextSpan(
+                                children: [
+                                  TextSpan(
+                                    style: TextTheme.of(context).bodyMedium,
+                                    text: 'ℹ️ First, fill in your name and token. Then save to get an ID. You can send that ID to friends to show them your location.\n\nGenerate a token at: ',
+                                  ),
+                                  TextSpan(
+                                    style: TextTheme.of(context).bodyMedium!
+                                        .copyWith(
+                                          color: ColorScheme.of(context)
+                                              .primary,
+                                        ),
+                                    text: 'https://github.com/settings/personal-access-tokens/new',
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () async {
+                                        final url =
+                                            'https://github.com/settings/personal-access-tokens/new?name=Where%20location%20sharing%20token&description=A%20personal%20access%20token%20for%20the%20where%20app,%20which%20grants%20only%20gist%20permissions&expires_in=none&gists=write';
+                                        await launchUrlString(url);
+                                      },
+                                  ),
+                                  TextSpan(
+                                    style: TextTheme.of(context).bodyMedium,
+                                    text: '.\n\nThe link above will pre-fill the correct settings and permissions - all you need to do is click Generate, then copy the token before leaving the page and paste it below.',
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ]),
                     Row(
                       spacing: 10,
                       children: [
@@ -262,6 +296,9 @@ class _SharingPageState extends State<SharingPage> {
                           ),
                         ),
                       ],
+                    ),
+                    Text(
+                      'To share your location, copy the ID above and send it to people you know. To add others to your map, click "Add friend" below and paste in their ID, then click save.',
                     ),
                     Divider(),
                     Text(
@@ -376,7 +413,7 @@ class _SharingPageState extends State<SharingPage> {
                             'Add friend',
                             style: TextTheme.of(context).titleMedium,
                           ),
-                          onPressed: hasId
+                          onPressed: !hasId
                               ? null
                               : () {
                                   final newFriend = Share(
@@ -394,7 +431,7 @@ class _SharingPageState extends State<SharingPage> {
                                   });
                                 },
                         ),
-                        ...(hasId
+                        ...(!hasId
                             ? [
                                 Flexible(
                                   child: Text(

@@ -93,6 +93,9 @@ class LandingPage extends StatelessWidget {
                 ),
               ),
             ),
+            Text(
+              "ℹ️ To get set up, start with Permissions, then go to Sharing. Once you're done, use the Map to see location history of yourself and friends.",
+            ),
             const Spacer(),
           ],
         ),

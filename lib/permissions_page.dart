@@ -265,7 +265,7 @@ class _PermissionsPageState extends State<PermissionsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          spacing: 40,
+          spacing: 20,
           children: [
             ...allPermissions.map((p) => buildPermission(context, p)),
             Column(
