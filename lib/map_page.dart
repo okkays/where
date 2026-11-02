@@ -277,6 +277,7 @@ class _MapPageState extends State<MapPage> {
               .toList(),
         ),
         RichAttributionWidget(
+          alignment: .bottomLeft,
           attributions: [
             TextSourceAttribution(
               'OpenStreetMap contributors',
@@ -287,8 +288,8 @@ class _MapPageState extends State<MapPage> {
         ),
         Positioned(
           bottom: MediaQuery.of(context).viewInsets.bottom + 40,
-          left: 20,
-          child: Row(
+          right: 20,
+          child: Column(
             spacing: 10,
             children: [
               FloatingActionButton(
