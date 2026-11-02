@@ -10,21 +10,21 @@ extension DateTimeExtension on DateTime {
     if ((difference.inDays / 7).floor() >= 1) {
       return longAgoFormatter.format(this);
     } else if (difference.inDays >= 2) {
-      return '${difference.inDays} days ago';
+      return '${difference.inDays}days';
     } else if (difference.inDays >= 1) {
       return 'Yesterday';
     } else if (difference.inHours >= 2) {
-      return '${difference.inHours} hours ago';
+      return '${difference.inHours}hrs';
     } else if (difference.inHours >= 1) {
-      return 'An hour ago';
+      return '1hr';
     } else if (difference.inMinutes >= 2) {
-      return '${difference.inMinutes} minutes ago';
+      return '${difference.inMinutes} mins';
     } else if (difference.inMinutes >= 1) {
-      return 'A minute ago';
+      return '1min';
     } else if (difference.inSeconds >= 3) {
-      return '${difference.inSeconds} seconds ago';
+      return '${difference.inSeconds} secs';
     } else {
-      return 'Just now';
+      return 'Now';
     }
   }
 }

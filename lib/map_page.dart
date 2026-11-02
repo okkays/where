@@ -21,11 +21,13 @@ class MapPage extends StatefulWidget {
 }
 
 class _MapPageState extends State<MapPage> {
+  bool showTimeAgo = false;
   bool isRefreshing = true;
   bool isUploading = false;
   List<Polyline> polylines = [];
 
   List<Marker> markers = [];
+  List<Marker> timeAgoLabels = [];
 
   List<Share> shares = [];
   Map<String, Color> colors = {};
@@ -57,6 +59,13 @@ class _MapPageState extends State<MapPage> {
     await refresh(updateFit: true);
   }
 
+  void toggleTimeAgo() async {
+    setState(() {
+      showTimeAgo = !showTimeAgo;
+    });
+    await refresh();
+  }
+
   Future<void> initFromSettings() async {
     final settings = await Settings.getSingleton();
     if (settings.storage != null) {
@@ -84,6 +93,7 @@ class _MapPageState extends State<MapPage> {
     await store?.refreshSharesFromStore();
     final List<Polyline> newPolylines = [];
     final List<Marker> newMarkers = [];
+    final List<Marker> newTimeAgoLabels = [];
     final List<LatLng> newCoordinates = [];
     await Share.iterateOverDb().forEach((share) {
       print(share);
@@ -95,7 +105,7 @@ class _MapPageState extends State<MapPage> {
           ? colors[share.storage]
           : Colors.grey;
 
-      newMarkers.addAll(
+      newTimeAgoLabels.addAll(
         sortedLocations.getRange(1, sortedLocations.length).map((location) {
           return Marker(
             point: location.location,
@@ -127,54 +137,65 @@ class _MapPageState extends State<MapPage> {
         }),
       );
 
+      final nowLocation = sortedLocations.first;
       newMarkers.add(
         Marker(
-          point: sortedLocations.first.location,
+          point: nowLocation.location,
           width: _avatarSize * 4,
           height: _avatarSize * 4,
-          child: Column(
-            spacing: 2,
-            crossAxisAlignment: .center,
-            mainAxisAlignment: .center,
-            children: [
-              CircleAvatar(
-                backgroundColor: color,
-                child: const Icon(
-                  Icons.person_pin_circle,
-                  size: _avatarSize,
-                  color: Colors.white,
+          child: GestureDetector(
+            onTap: () {
+              controller.fitCamera(
+                CameraFit.coordinates(
+                  coordinates: [nowLocation.location],
+                  maxZoom: 14,
                 ),
-              ),
-              DecoratedBox(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: .all(.circular(5)),
-                ),
-                child: Padding(
-                  padding: const .all(4),
-                  child: Text(
-                    share.name,
-                    style: mounted ? TextTheme.of(context).labelLarge : null,
+              );
+            },
+            child: Column(
+              spacing: 2,
+              crossAxisAlignment: .center,
+              mainAxisAlignment: .center,
+              children: [
+                CircleAvatar(
+                  backgroundColor: color,
+                  child: const Icon(
+                    Icons.person_pin_circle,
+                    size: _avatarSize,
+                    color: Colors.white,
                   ),
                 ),
-              ),
-              DecoratedBox(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: .all(.circular(5)),
-                ),
-                child: Padding(
-                  padding: const .all(4),
-                  child: Text(
-                    '(${sortedLocations.first.timestamp.timeAgo()})',
-                    style: mounted
-                        ? TextTheme.of(context).labelMedium!
-                              .copyWith(fontStyle: .italic)
-                        : null,
+                DecoratedBox(
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: .all(.circular(5)),
+                  ),
+                  child: Padding(
+                    padding: const .all(4),
+                    child: Text(
+                      share.name,
+                      style: mounted ? TextTheme.of(context).labelLarge : null,
+                    ),
                   ),
                 ),
-              ),
-            ],
+                Visibility(visible: showTimeAgo, child: DecoratedBox(
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: .all(.circular(5)),
+                  ),
+                  child: Padding(
+                    padding: const .all(4),
+                    child: Text(
+                      '(${nowLocation.timestamp.timeAgo()})',
+                      style: mounted
+                          ? TextTheme.of(context).labelMedium!
+                                .copyWith(fontStyle: .italic)
+                          : null,
+                    ),
+                  ),
+                )),
+              ],
+            ),
           ),
         ),
       );
@@ -185,6 +206,7 @@ class _MapPageState extends State<MapPage> {
         Polyline(
           points: sortedLocations.map((l) => l.location).toList(),
           color: color ?? Colors.grey,
+          strokeWidth: 5,
         ),
       );
     });
@@ -195,6 +217,7 @@ class _MapPageState extends State<MapPage> {
     }
     setState(() {
       markers = newMarkers;
+      timeAgoLabels = newTimeAgoLabels;
       polylines = newPolylines;
       isRefreshing = false;
     });
@@ -229,6 +252,10 @@ class _MapPageState extends State<MapPage> {
           userAgentPackageName: 'com.okkays.where',
         ),
         PolylineLayer(polylines: polylines),
+        Visibility(
+          visible: showTimeAgo,
+          child: MarkerLayer(markers: timeAgoLabels),
+        ),
         MarkerLayer(markers: markers),
         RichAttributionWidget(
           attributions: [
@@ -265,6 +292,17 @@ class _MapPageState extends State<MapPage> {
                 heroTag: null,
                 onPressed: refit,
                 child: const Icon(Icons.fit_screen),
+              ),
+              FloatingActionButton(
+                backgroundColor: !showTimeAgo ? Colors.grey.shade300 : null,
+                heroTag: null,
+                onPressed: toggleTimeAgo,
+                child: !showTimeAgo
+                    ? Icon(
+                        Icons.history_toggle_off,
+                        color: Colors.grey.shade600,
+                      )
+                    : const Icon(Icons.schedule),
               ),
             ],
           ),
