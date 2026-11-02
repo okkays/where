@@ -24,13 +24,33 @@ class _MapPageState extends State<MapPage> {
   bool showTimeAgo = false;
   bool isRefreshing = true;
   bool isUploading = false;
-  List<Polyline> polylines = [];
-
-  List<Marker> markers = [];
-  List<Marker> timeAgoLabels = [];
-
   List<Share> shares = [];
   Map<String, Color> colors = {};
+
+  Color getColor(Share share) =>
+      colors.containsKey(share.storage) ? colors[share.storage]! : Colors.grey;
+
+  List<ShareLocation> sortLocations(Share share) =>
+      share.locations.sorted((l, r) => r.timestamp.compareTo(l.timestamp));
+
+  Iterable<({Share share, ShareLocation location, Color color})> iterateShares(
+    List<Share> shares,
+  ) => shares.expand(
+    (share) => sortLocations(share).map(
+      (location) => (share: share, location: location, color: getColor(share)),
+    ),
+  );
+
+  Iterable<({Share share, ShareLocation location, Color color})>
+  iterateCurrentShares(List<Share> shares) => shares.map(
+    (share) => (
+      share: share,
+      location: share.locations
+          .sorted((l, r) => r.timestamp.compareTo(l.timestamp))
+          .first,
+      color: getColor(share),
+    ),
+  );
 
   CameraFit fit = const CameraFit.coordinates(
     coordinates: [LatLng(43.18449, -109.65367)],
@@ -63,7 +83,6 @@ class _MapPageState extends State<MapPage> {
     setState(() {
       showTimeAgo = !showTimeAgo;
     });
-    await refresh();
   }
 
   Future<void> initFromSettings() async {
@@ -92,127 +111,12 @@ class _MapPageState extends State<MapPage> {
     });
     final store = await Store.fromSettings();
     await store?.refreshSharesFromStore();
-    final List<Polyline> newPolylines = [];
-    final List<Marker> newMarkers = [];
-    final List<Marker> newTimeAgoLabels = [];
     final List<LatLng> newCoordinates = [];
+    final List<Share> newShares = [];
     await Share.iterateOverDb().forEach((share) {
-      print(share);
       if (share.locations.isEmpty) return;
-      final sortedLocations = share.locations.sorted(
-        (l, r) => r.timestamp.compareTo(l.timestamp),
-      );
-      final color = colors.containsKey(share.storage)
-          ? colors[share.storage]
-          : Colors.grey;
-
-      newTimeAgoLabels.addAll(
-        sortedLocations.getRange(1, sortedLocations.length).map((location) {
-          return Marker(
-            point: location.location,
-            width: _avatarSize * 3,
-            height: _avatarSize * 1,
-            child: Column(
-              crossAxisAlignment: .center,
-              mainAxisAlignment: .center,
-              children: [
-                DecoratedBox(
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: .all(.circular(5)),
-                  ),
-                  child: Padding(
-                    padding: const .all(4),
-                    child: Text(
-                      location.timestamp.timeAgo(),
-                      style: mounted
-                          ? TextTheme.of(context).labelMedium!
-                                .copyWith(fontStyle: .italic)
-                          : null,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }),
-      );
-
-      final nowLocation = sortedLocations.first;
-      newMarkers.add(
-        Marker(
-          point: nowLocation.location,
-          width: _avatarSize * 4,
-          height: _avatarSize * 4,
-          child: GestureDetector(
-            onTap: () {
-              controller.fitCamera(
-                CameraFit.coordinates(
-                  coordinates: [nowLocation.location],
-                  maxZoom: 14,
-                ),
-              );
-            },
-            child: Column(
-              spacing: 2,
-              crossAxisAlignment: .center,
-              mainAxisAlignment: .center,
-              children: [
-                CircleAvatar(
-                  backgroundColor: color,
-                  child: const Icon(
-                    Icons.person_pin_circle,
-                    size: _avatarSize,
-                    color: Colors.white,
-                  ),
-                ),
-                DecoratedBox(
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: .all(.circular(5)),
-                  ),
-                  child: Padding(
-                    padding: const .all(4),
-                    child: Text(
-                      share.name,
-                      style: mounted ? TextTheme.of(context).labelLarge : null,
-                    ),
-                  ),
-                ),
-                Visibility(
-                  visible: showTimeAgo,
-                  child: DecoratedBox(
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: .all(.circular(5)),
-                    ),
-                    child: Padding(
-                      padding: const .all(4),
-                      child: Text(
-                        '(${nowLocation.timestamp.timeAgo()})',
-                        style: mounted
-                            ? TextTheme.of(context).labelMedium!
-                                  .copyWith(fontStyle: .italic)
-                            : null,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-
-      newCoordinates.addAll(sortedLocations.map((l) => l.location));
-
-      newPolylines.add(
-        Polyline(
-          points: sortedLocations.map((l) => l.location).toList(),
-          color: color ?? Colors.grey,
-          strokeWidth: 5,
-        ),
-      );
+      newShares.add(share);
+      newCoordinates.addAll(share.locations.map((l) => l.location));
     });
     print('POINTS: ${newCoordinates.length}');
     fit = CameraFit.coordinates(coordinates: newCoordinates, maxZoom: 12);
@@ -221,9 +125,7 @@ class _MapPageState extends State<MapPage> {
       controller.move(controller.camera.center, controller.camera.zoom - 0.5);
     }
     setState(() {
-      markers = newMarkers;
-      timeAgoLabels = newTimeAgoLabels;
-      polylines = newPolylines;
+      shares = newShares;
       isRefreshing = false;
     });
   }
@@ -256,12 +158,124 @@ class _MapPageState extends State<MapPage> {
           urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
           userAgentPackageName: 'com.okkays.where',
         ),
-        PolylineLayer(polylines: polylines),
+        PolylineLayer(
+          polylines: shares
+              .map(
+                (share) => Polyline(
+                  points: sortLocations(share).map((l) => l.location).toList(),
+                  color: getColor(share),
+                  strokeWidth: 5,
+                ),
+              )
+              .toList(),
+        ),
         Visibility(
           visible: showTimeAgo,
-          child: MarkerLayer(markers: timeAgoLabels),
+          child: MarkerLayer(
+            markers: iterateShares(shares)
+                .skip(1)
+                .map<Marker>(
+                  (shareAndLocation) => Marker(
+                    point: shareAndLocation.location.location,
+                    width: _avatarSize * 3,
+                    height: _avatarSize * 1,
+                    child: Column(
+                      crossAxisAlignment: .center,
+                      mainAxisAlignment: .center,
+                      children: [
+                        DecoratedBox(
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: .all(.circular(5)),
+                          ),
+                          child: Padding(
+                            padding: const .all(4),
+                            child: Text(
+                              shareAndLocation.location.timestamp.timeAgo(),
+                              style: mounted
+                                  ? TextTheme.of(context).labelMedium!
+                                        .copyWith(fontStyle: .italic)
+                                  : null,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
         ),
-        MarkerLayer(markers: markers),
+        MarkerLayer(
+          markers: iterateCurrentShares(shares)
+              .map<Marker>(
+                (shareAndLocation) => Marker(
+                  point: shareAndLocation.location.location,
+                  width: _avatarSize * 4,
+                  height: _avatarSize * 4,
+                  child: GestureDetector(
+                    onTap: () {
+                      controller.fitCamera(
+                        CameraFit.coordinates(
+                          coordinates: [shareAndLocation.location.location],
+                          maxZoom: 14,
+                        ),
+                      );
+                    },
+                    child: Column(
+                      spacing: 2,
+                      crossAxisAlignment: .center,
+                      mainAxisAlignment: .center,
+                      children: [
+                        CircleAvatar(
+                          backgroundColor: shareAndLocation.color,
+                          child: const Icon(
+                            Icons.person_pin_circle,
+                            size: _avatarSize,
+                            color: Colors.white,
+                          ),
+                        ),
+                        DecoratedBox(
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: .all(.circular(5)),
+                          ),
+                          child: Padding(
+                            padding: const .all(4),
+                            child: Text(
+                              shareAndLocation.share.name,
+                              style: mounted
+                                  ? TextTheme.of(context).labelLarge
+                                  : null,
+                            ),
+                          ),
+                        ),
+                        Visibility(
+                          visible: showTimeAgo,
+                          child: DecoratedBox(
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: .all(.circular(5)),
+                            ),
+                            child: Padding(
+                              padding: const .all(4),
+                              child: Text(
+                                '(${shareAndLocation.location.timestamp.timeAgo()})',
+                                style: mounted
+                                    ? TextTheme.of(context).labelMedium!
+                                          .copyWith(fontStyle: .italic)
+                                    : null,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
+        ),
         RichAttributionWidget(
           attributions: [
             TextSourceAttribution(
