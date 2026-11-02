@@ -3,7 +3,8 @@ import 'dart:async';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:latlong2/latlong.dart' as ll;
+import 'package:map_launcher/map_launcher.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:where/settings.dart';
 import 'package:where/share.dart';
@@ -20,11 +21,18 @@ class MapPage extends StatefulWidget {
   State<StatefulWidget> createState() => _MapPageState();
 }
 
+typedef _ShareAndLocation = ({
+  Share share,
+  ShareLocation location,
+  Color color,
+});
+
 class _MapPageState extends State<MapPage> {
   bool showTimeAgo = false;
   bool isRefreshing = true;
   bool isUploading = false;
   List<Share> shares = [];
+  Set<String> showUserMenu = {};
   Map<String, Color> colors = {};
 
   Color getColor(Share share) =>
@@ -33,13 +41,13 @@ class _MapPageState extends State<MapPage> {
   List<ShareLocation> sortLocations(Share share) =>
       share.locations.sorted((l, r) => r.timestamp.compareTo(l.timestamp));
 
-  Iterable<({Share share, ShareLocation location, Color color})> iterateShares(
-    List<Share> shares,
-  ) => shares.expand(
-    (share) => sortLocations(share).map(
-      (location) => (share: share, location: location, color: getColor(share)),
-    ),
-  );
+  Iterable<_ShareAndLocation> iterateShares(List<Share> shares) =>
+      shares.expand(
+        (share) => sortLocations(share).map(
+          (location) =>
+              (share: share, location: location, color: getColor(share)),
+        ),
+      );
 
   Iterable<({Share share, ShareLocation location, Color color})>
   iterateCurrentShares(List<Share> shares) => shares.map(
@@ -53,7 +61,7 @@ class _MapPageState extends State<MapPage> {
   );
 
   CameraFit fit = const CameraFit.coordinates(
-    coordinates: [LatLng(43.18449, -109.65367)],
+    coordinates: [ll.LatLng(43.18449, -109.65367)],
     maxZoom: 12,
   );
 
@@ -101,6 +109,9 @@ class _MapPageState extends State<MapPage> {
   }
 
   Future<void> refit() async {
+    setState(() {
+      showUserMenu.clear();
+    });
     controller.fitCamera(fit);
     controller.move(controller.camera.center, controller.camera.zoom - 0.5);
   }
@@ -111,7 +122,7 @@ class _MapPageState extends State<MapPage> {
     });
     final store = await Store.fromSettings();
     await store?.refreshSharesFromStore();
-    final List<LatLng> newCoordinates = [];
+    final List<ll.LatLng> newCoordinates = [];
     final List<Share> newShares = [];
     await Share.iterateOverDb().forEach((share) {
       if (share.locations.isEmpty) return;
@@ -145,6 +156,8 @@ class _MapPageState extends State<MapPage> {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = TextTheme.of(context).labelMedium!;
+    final textHeight = (textTheme.height ?? 20) * (textTheme.fontSize ?? 1);
     return FlutterMap(
       mapController: controller,
       options: MapOptions(
@@ -177,24 +190,27 @@ class _MapPageState extends State<MapPage> {
                 .map<Marker>(
                   (shareAndLocation) => Marker(
                     point: shareAndLocation.location.location,
-                    width: _avatarSize * 3,
-                    height: _avatarSize * 1,
+                    width: MediaQuery.of(context).size.width / 2,
+                    height: textHeight * 2,
                     child: Column(
                       crossAxisAlignment: .center,
                       mainAxisAlignment: .center,
                       children: [
                         DecoratedBox(
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
+                            border: BoxBorder.all(
+                              color: Colors.black,
+                              width: 1,
+                            ),
                             color: Colors.white,
-                            borderRadius: .all(.circular(5)),
+                            borderRadius: const .all(.circular(5)),
                           ),
                           child: Padding(
                             padding: const .all(4),
                             child: Text(
                               shareAndLocation.location.timestamp.timeAgo(),
                               style: mounted
-                                  ? TextTheme.of(context).labelMedium!
-                                        .copyWith(fontStyle: .italic)
+                                  ? textTheme.copyWith(fontStyle: .italic)
                                   : null,
                             ),
                           ),
@@ -211,23 +227,44 @@ class _MapPageState extends State<MapPage> {
               .map<Marker>(
                 (shareAndLocation) => Marker(
                   point: shareAndLocation.location.location,
-                  width: _avatarSize * 4,
-                  height: _avatarSize * 4,
-                  child: GestureDetector(
-                    onTap: () {
-                      controller.fitCamera(
-                        CameraFit.coordinates(
-                          coordinates: [shareAndLocation.location.location],
-                          maxZoom: 14,
+                  width: MediaQuery.of(context).size.width / 2,
+                  height: MediaQuery.of(context).size.height / 2,
+                  child: Column(
+                    spacing: 2,
+                    crossAxisAlignment: .center,
+                    mainAxisAlignment: .center,
+                    children: [
+                      Visibility(
+                        visible: showUserMenu.contains(
+                          shareAndLocation.share.storage,
                         ),
-                      );
-                    },
-                    child: Column(
-                      spacing: 2,
-                      crossAxisAlignment: .center,
-                      mainAxisAlignment: .center,
-                      children: [
-                        CircleAvatar(
+                        child: _MapBubble(
+                          shareAndLocation: shareAndLocation,
+                          onClosed: () {
+                            setState(() {
+                              showUserMenu.remove(
+                                shareAndLocation.share.storage,
+                              );
+                            });
+                          },
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            final key = shareAndLocation.share.storage;
+                            showUserMenu.contains(key)
+                                ? showUserMenu.remove(key)
+                                : showUserMenu.add(key);
+                          });
+                          controller.fitCamera(
+                            CameraFit.coordinates(
+                              coordinates: [shareAndLocation.location.location],
+                              maxZoom: 14,
+                            ),
+                          );
+                        },
+                        child: CircleAvatar(
                           backgroundColor: shareAndLocation.color,
                           child: const Icon(
                             Icons.person_pin_circle,
@@ -235,42 +272,46 @@ class _MapPageState extends State<MapPage> {
                             color: Colors.white,
                           ),
                         ),
-                        DecoratedBox(
-                          decoration: const BoxDecoration(
+                      ),
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          border: BoxBorder.all(color: Colors.black, width: 1),
+                          color: Colors.white,
+                          borderRadius: const .all(.circular(5)),
+                        ),
+                        child: Padding(
+                          padding: const .all(4),
+                          child: Text(
+                            maxLines: 1,
+                            shareAndLocation.share.name,
+                            style: mounted ? textTheme : null,
+                          ),
+                        ),
+                      ),
+                      Visibility(
+                        visible: showTimeAgo,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            border: BoxBorder.all(
+                              color: Colors.black,
+                              width: 1,
+                            ),
                             color: Colors.white,
-                            borderRadius: .all(.circular(5)),
+                            borderRadius: const .all(.circular(5)),
                           ),
                           child: Padding(
                             padding: const .all(4),
                             child: Text(
-                              shareAndLocation.share.name,
+                              maxLines: 1,
+                              '(${shareAndLocation.location.timestamp.timeAgo()})',
                               style: mounted
-                                  ? TextTheme.of(context).labelLarge
+                                  ? textTheme.copyWith(fontStyle: .italic)
                                   : null,
                             ),
                           ),
                         ),
-                        Visibility(
-                          visible: showTimeAgo,
-                          child: DecoratedBox(
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: .all(.circular(5)),
-                            ),
-                            child: Padding(
-                              padding: const .all(4),
-                              child: Text(
-                                '(${shareAndLocation.location.timestamp.timeAgo()})',
-                                style: mounted
-                                    ? TextTheme.of(context).labelMedium!
-                                          .copyWith(fontStyle: .italic)
-                                    : null,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               )
@@ -329,5 +370,80 @@ class _MapPageState extends State<MapPage> {
         ),
       ],
     );
+  }
+}
+
+class _MapBubble extends StatelessWidget {
+  final _ShareAndLocation shareAndLocation;
+  final VoidCallback onClosed;
+
+  const _MapBubble({required this.onClosed, required this.shareAndLocation});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const .only(bottom: 10),
+    child: CustomPaint(
+      painter: _MapBubblePainter(triangleSize: 10),
+      child: Padding(
+        padding: const .all(5),
+        child: Column(
+          children: [
+            GestureDetector(
+              onTap: () async {
+                await MapLauncher.marker(
+                  .coords(
+                    shareAndLocation.location.location.latitude,
+                    shareAndLocation.location.location.longitude,
+                    title: shareAndLocation.share.name,
+                  ),
+                ).show();
+              },
+              child: const Row(
+                spacing: 5,
+                children: [Icon(Icons.directions), Text('Get Directions')],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _MapBubblePainter extends CustomPainter {
+  final double triangleSize;
+  _MapBubblePainter({required this.triangleSize});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path();
+    path.lineTo(0, 0);
+    path.lineTo(0, size.height);
+
+    path.lineTo((size.width / 2 - (triangleSize / 2)), size.height);
+    path.lineTo((size.width / 2), size.height + triangleSize);
+    path.lineTo((size.width / 2 + (triangleSize / 2)), size.height);
+
+    path.lineTo(size.width, size.height);
+    path.lineTo(size.width, 0);
+    path.lineTo(0, 0);
+
+    final border = Paint();
+    border.style = .stroke;
+    border.strokeWidth = 2;
+    border.strokeJoin = .round;
+    border.strokeCap = .round;
+
+    final fill = Paint();
+    fill.style = .fill;
+    fill.color = Colors.lightBlue.shade100;
+
+    canvas.drawPath(path, border);
+    canvas.drawPath(path, fill);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    return false;
   }
 }

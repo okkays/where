@@ -47,6 +47,7 @@ dependencies:
   uuid: ^4.6.0
   collection: ^1.19.1
   intl: ^0.20.3
+  map_launcher: ^7.0.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
