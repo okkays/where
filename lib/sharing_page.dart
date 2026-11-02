@@ -21,7 +21,10 @@ class _SharingPageState extends State<SharingPage> {
   List<Share> friends = [];
   bool isFriendsLoading = true;
 
-  Icon tokenStatusIcon = const Icon(Icons.hourglass_empty, color: Colors.orange);
+  Icon tokenStatusIcon = const Icon(
+    Icons.hourglass_empty,
+    color: Colors.orange,
+  );
   final nameController = TextEditingController();
   final storageController = TextEditingController();
   final tokenController = TextEditingController();
@@ -104,6 +107,23 @@ class _SharingPageState extends State<SharingPage> {
     final store = await Store.fromSettings();
     final share = await store?.getOrCreateMyShare();
     settings.storage = settings.token.isEmpty ? null : share?.storage;
+
+    if (share != null && store != null) {
+      bool needsPush = false;
+      if (settings.username != share.name) {
+        share.name = settings.username;
+        needsPush = true;
+      }
+      if (settings.image != share.image) {
+        share.image = settings.image;
+        needsPush = true;
+      }
+      if (needsPush) {
+        await store.updateMyShare(share);
+        await share.save();
+      }
+    }
+
     storageController.value = .new(text: settings.storage ?? '');
     if (settings.token.isEmpty) {
       settings.friends = [];
@@ -423,7 +443,10 @@ class _SharingPageState extends State<SharingPage> {
                       spacing: 10,
                       children: [
                         ElevatedButton.icon(
-                          icon: const Icon(Icons.person_add, color: Colors.green),
+                          icon: const Icon(
+                            Icons.person_add,
+                            color: Colors.green,
+                          ),
                           label: Text(
                             'Add friend',
                             style: TextTheme.of(context).titleMedium,
@@ -481,7 +504,10 @@ class _SharingPageState extends State<SharingPage> {
                 }),
                 child: (switch (data.isSaved) {
                   .saved => Icon(Icons.save, color: Colors.grey.shade600),
-                  .unsaved => const Badge(smallSize: 10, child: Icon(Icons.save)),
+                  .unsaved => const Badge(
+                    smallSize: 10,
+                    child: Icon(Icons.save),
+                  ),
                   .saving => Icon(
                     Icons.hourglass_top,
                     color: Colors.orange.shade800,

@@ -67,8 +67,8 @@ class ShareLocation {
 }
 
 class Share {
-  final String name;
-  final String image;
+  String name;
+  String image;
   String storage;
   bool isMine;
   final List<ShareLocation> locations;
