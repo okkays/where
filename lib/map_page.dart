@@ -83,6 +83,7 @@ class _MapPageState extends State<MapPage> {
 
   Future<void> refit() async {
     controller.fitCamera(fit);
+    controller.move(controller.camera.center, controller.camera.zoom - 0.5);
   }
 
   Future<void> refresh({bool updateFit = false}) async {
@@ -178,22 +179,25 @@ class _MapPageState extends State<MapPage> {
                     ),
                   ),
                 ),
-                Visibility(visible: showTimeAgo, child: DecoratedBox(
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: .all(.circular(5)),
-                  ),
-                  child: Padding(
-                    padding: const .all(4),
-                    child: Text(
-                      '(${nowLocation.timestamp.timeAgo()})',
-                      style: mounted
-                          ? TextTheme.of(context).labelMedium!
-                                .copyWith(fontStyle: .italic)
-                          : null,
+                Visibility(
+                  visible: showTimeAgo,
+                  child: DecoratedBox(
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: .all(.circular(5)),
+                    ),
+                    child: Padding(
+                      padding: const .all(4),
+                      child: Text(
+                        '(${nowLocation.timestamp.timeAgo()})',
+                        style: mounted
+                            ? TextTheme.of(context).labelMedium!
+                                  .copyWith(fontStyle: .italic)
+                            : null,
+                      ),
                     ),
                   ),
-                )),
+                ),
               ],
             ),
           ),
@@ -214,6 +218,7 @@ class _MapPageState extends State<MapPage> {
     fit = CameraFit.coordinates(coordinates: newCoordinates, maxZoom: 12);
     if (updateFit && newCoordinates.isNotEmpty) {
       controller.fitCamera(fit);
+      controller.move(controller.camera.center, controller.camera.zoom - 0.5);
     }
     setState(() {
       markers = newMarkers;
