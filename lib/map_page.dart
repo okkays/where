@@ -163,8 +163,8 @@ class _MapPageState extends State<MapPage> {
                 .map<Marker>(
                   (shareAndLocation) => Marker(
                     point: shareAndLocation.location.location,
-                    width: MediaQuery.of(context).size.width / 2,
-                    height: textHeight * 2,
+                    width: MediaQuery.of(context).size.width,
+                    height: textHeight * 3,
                     child: Column(
                       crossAxisAlignment: .center,
                       mainAxisAlignment: .center,
@@ -183,7 +183,13 @@ class _MapPageState extends State<MapPage> {
                             child: Text(
                               shareAndLocation.location.timestamp.timeAgo(),
                               style: mounted
-                                  ? textTheme.copyWith(fontStyle: .italic)
+                                  ? textTheme.copyWith(
+                                      fontStyle: .italic,
+                                      color: shareAndLocation
+                                          .share
+                                          .image
+                                          .strokeColor,
+                                    )
                                   : null,
                             ),
                           ),
@@ -200,7 +206,7 @@ class _MapPageState extends State<MapPage> {
               .map<Marker>(
                 (shareAndLocation) => Marker(
                   point: shareAndLocation.location.location,
-                  width: MediaQuery.of(context).size.width / 2,
+                  width: MediaQuery.of(context).size.width,
                   height: MediaQuery.of(context).size.height / 2,
                   child: Column(
                     spacing: 2,
@@ -312,7 +318,13 @@ class _MapPageState extends State<MapPage> {
                               maxLines: 1,
                               '(${shareAndLocation.location.timestamp.timeAgo()})',
                               style: mounted
-                                  ? textTheme.copyWith(fontStyle: .italic)
+                                  ? textTheme.copyWith(
+                                      fontStyle: .italic,
+                                      color: shareAndLocation
+                                          .share
+                                          .image
+                                          .strokeColor,
+                                    )
                                   : null,
                             ),
                           ),
@@ -408,7 +420,8 @@ class _MapBubble extends StatelessWidget {
                   ),
                 ).show();
               },
-              child: Row(
+              child: Wrap(
+                crossAxisAlignment: .center,
                 spacing: 5,
                 children: [
                   Icon(
