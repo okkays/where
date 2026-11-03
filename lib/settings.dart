@@ -36,6 +36,9 @@ class AvatarImage {
 
   AvatarImage({required this.avatar, required this.color});
 
+  Color get strokeColor =>
+      color.computeLuminance() > 0.5 ? Colors.black : Colors.white;
+
   @override
   int get hashCode => Object.hash(color, avatar);
 

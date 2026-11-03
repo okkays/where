@@ -172,10 +172,10 @@ class _MapPageState extends State<MapPage> {
                         DecoratedBox(
                           decoration: BoxDecoration(
                             border: BoxBorder.all(
-                              color: Colors.black,
+                              color: shareAndLocation.share.image.strokeColor,
                               width: 1,
                             ),
-                            color: Colors.white,
+                            color: shareAndLocation.share.image.color,
                             borderRadius: const .all(.circular(5)),
                           ),
                           child: Padding(
@@ -237,34 +237,46 @@ class _MapPageState extends State<MapPage> {
                             ),
                           );
                         },
-                        child: CircleAvatar(
-                          backgroundColor: shareAndLocation.share.image.color,
-                          child: shareAndLocation.share.image.avatar.isEmpty
-                              ? const Icon(
-                                  Icons.person_pin_circle,
-                                  size: _avatarSize,
-                                  color: Colors.white,
-                                )
-                              : FittedBox(
-                                  fit: .cover,
-                                  child: Text(
+                        child: Container(
+                          width: _avatarSize,
+                          height: _avatarSize,
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              width: 2,
+                              color: shareAndLocation.share.image.strokeColor,
+                            ),
+                            shape: .circle,
+                            color: shareAndLocation.share.image.color,
+                          ),
+                          child: FittedBox(
+                            fit: .cover,
+                            child: shareAndLocation.share.image.avatar.isEmpty
+                                ? Icon(
+                                    Icons.person_pin_circle,
+                                    color: shareAndLocation
+                                        .share
+                                        .image
+                                        .strokeColor,
+                                  )
+                                : Text(
                                     shareAndLocation.share.image.avatar,
                                     style: TextStyle(
-                                      color:
-                                          shareAndLocation.share.image.color
-                                                  .computeLuminance() >
-                                              0.5
-                                          ? Colors.black
-                                          : Colors.white,
+                                      color: shareAndLocation
+                                          .share
+                                          .image
+                                          .strokeColor,
                                     ),
                                   ),
-                                ),
+                          ),
                         ),
                       ),
                       DecoratedBox(
                         decoration: BoxDecoration(
-                          border: BoxBorder.all(color: Colors.black, width: 1),
-                          color: Colors.white,
+                          border: BoxBorder.all(
+                            color: shareAndLocation.share.image.strokeColor,
+                            width: 2,
+                          ),
+                          color: shareAndLocation.share.image.color,
                           borderRadius: const .all(.circular(5)),
                         ),
                         child: Padding(
@@ -272,7 +284,14 @@ class _MapPageState extends State<MapPage> {
                           child: Text(
                             maxLines: 1,
                             shareAndLocation.share.name,
-                            style: mounted ? textTheme : null,
+                            style: mounted
+                                ? textTheme.copyWith(
+                                    color: shareAndLocation
+                                        .share
+                                        .image
+                                        .strokeColor,
+                                  )
+                                : null,
                           ),
                         ),
                       ),
@@ -281,10 +300,10 @@ class _MapPageState extends State<MapPage> {
                         child: DecoratedBox(
                           decoration: BoxDecoration(
                             border: BoxBorder.all(
-                              color: Colors.black,
+                              color: shareAndLocation.share.image.strokeColor,
                               width: 1,
                             ),
-                            color: Colors.white,
+                            color: shareAndLocation.share.image.color,
                             borderRadius: const .all(.circular(5)),
                           ),
                           child: Padding(
@@ -364,12 +383,8 @@ class _MapPageState extends State<MapPage> {
 class _MapBubble extends StatelessWidget {
   final _ShareAndLocation shareAndLocation;
   final VoidCallback onClosed;
-  final Color textColor;
 
-  _MapBubble({required this.onClosed, required this.shareAndLocation})
-    : textColor = shareAndLocation.share.image.color.computeLuminance() > 0.5
-          ? Colors.black
-          : Colors.white;
+  const _MapBubble({required this.onClosed, required this.shareAndLocation});
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -396,8 +411,16 @@ class _MapBubble extends StatelessWidget {
               child: Row(
                 spacing: 5,
                 children: [
-                  Icon(Icons.directions, color: textColor),
-                  Text('Get Directions', style: TextStyle(color: textColor)),
+                  Icon(
+                    Icons.directions,
+                    color: shareAndLocation.share.image.strokeColor,
+                  ),
+                  Text(
+                    'Get Directions',
+                    style: TextStyle(
+                      color: shareAndLocation.share.image.strokeColor,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -430,10 +453,18 @@ class _MapBubblePainter extends CustomPainter {
     path.lineTo(size.width, 0);
     path.lineTo(0, 0);
 
+    final border = Paint();
+    border.color = shareAndLocation.share.image.strokeColor;
+    border.style = .stroke;
+    border.strokeWidth = 4;
+    border.strokeJoin = .round;
+    border.strokeCap = .round;
+
     final fill = Paint();
     fill.style = .fill;
     fill.color = shareAndLocation.share.image.color;
 
+    canvas.drawPath(path, border);
     canvas.drawPath(path, fill);
   }
 
