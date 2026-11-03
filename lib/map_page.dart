@@ -249,7 +249,7 @@ class _MapPageState extends State<MapPage> {
                             color: shareAndLocation.share.image.color,
                           ),
                           child: FittedBox(
-                            fit: .cover,
+                            fit: .contain,
                             child: shareAndLocation.share.image.avatar.isEmpty
                                 ? Icon(
                                     Icons.person_pin_circle,
