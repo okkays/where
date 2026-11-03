@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:location/location.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:where/settings.dart';
 
 Future<Database> openShareDatabase() async {
   return openDatabase(
@@ -68,7 +69,7 @@ class ShareLocation {
 
 class Share {
   String name;
-  String image;
+  AvatarImage image;
   String storage;
   bool isMine;
   final List<ShareLocation> locations;
@@ -94,7 +95,7 @@ class Share {
   Map<String, Object?> toDb() {
     return {
       'name': name,
-      'image': image,
+      'image': image.toDb(),
       'storage': storage,
       'locations': jsonEncode(locations.map((l) => l.toDb()).toList()),
       'is_mine': isMine ? 1 : 0,
@@ -106,7 +107,7 @@ class Share {
     final List<dynamic> list = jsonDecode(dbValue['locations'] as String);
     return Share(
       name: dbValue['name'] as String,
-      image: dbValue['image'] as String,
+      image: AvatarImage.fromDb(dbValue['image']),
       storage: dbValue['storage'] as String,
       isMine: dbValue['is_mine'] == 1,
       locations: List<String>.from(list).map(ShareLocation.fromDb).toList(),

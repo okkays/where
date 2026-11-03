@@ -2,6 +2,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher_string.dart';
+import 'package:where/color_picker.dart';
+import 'package:where/streams.dart';
 
 import './share.dart';
 import './store.dart';
@@ -26,6 +28,7 @@ class _SharingPageState extends State<SharingPage> {
     color: Colors.orange,
   );
   final nameController = TextEditingController();
+  final imageController = TextEditingController();
   final storageController = TextEditingController();
   final tokenController = TextEditingController();
   final Map<Share, TextEditingController> newFriendControllers = {};
@@ -33,6 +36,7 @@ class _SharingPageState extends State<SharingPage> {
   @override
   void dispose() {
     nameController.dispose();
+    imageController.dispose();
     storageController.dispose();
     tokenController.dispose();
     for (var controller in newFriendControllers.values) {
@@ -67,7 +71,7 @@ class _SharingPageState extends State<SharingPage> {
         if (inflated != null) return inflated;
         final errorShare = Share(
           name: '',
-          image: '',
+          image: AvatarImage(avatar: '', color: defaultAppBarSnapshot.color),
           storage: id,
           locations: [],
           isMine: false,
@@ -165,6 +169,7 @@ class _SharingPageState extends State<SharingPage> {
     final settings = await futureSettings;
     setState(() {
       nameController.value = .new(text: settings.username);
+      imageController.value = .new(text: settings.image.avatar);
       storageController.value = .new(text: settings.storage ?? '');
       tokenController.value = .new(text: settings.token);
     });
@@ -248,6 +253,54 @@ class _SharingPageState extends State<SharingPage> {
                                 data.isSaved = .unsaved;
                               });
                               data.username = newValue;
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      spacing: 10,
+                      children: [
+                        Text(
+                          'Color:',
+                          style: TextTheme.of(context).titleMedium,
+                        ),
+                        Expanded(
+                          child: ColorPicker(
+                            initialColor: data.image.color,
+                            onChanged: (newColor) {
+                              data.image.color = newColor;
+                              setState(() {
+                                data.isSaved = .unsaved;
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      spacing: 10,
+                      children: [
+                        Text(
+                          'Avatar:',
+                          style: TextTheme.of(context).titleMedium,
+                        ),
+                        Expanded(
+                          child: TextFormField(
+                            controller: imageController,
+                            textAlignVertical: .center,
+                            decoration: const InputDecoration(
+                              hintText: 'A single letter or emoji',
+                            ),
+                            onChanged: (newValue) {
+                              final last = newValue.characters.last;
+                              if (newValue.characters.length > 1) {
+                                imageController.value = .new(text: last);
+                              }
+                              setState(() {
+                                data.isSaved = .unsaved;
+                              });
+                              data.image.avatar = last;
                             },
                           ),
                         ),
@@ -456,7 +509,10 @@ class _SharingPageState extends State<SharingPage> {
                               : () {
                                   final newFriend = Share(
                                     name: '',
-                                    image: '',
+                                    image: AvatarImage(
+                                      avatar: '',
+                                      color: defaultAppBarSnapshot.color,
+                                    ),
                                     storage: '',
                                     locations: [],
                                     isMine: false,

@@ -1,8 +1,10 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:uuid/uuid.dart';
+import 'package:where/streams.dart';
 
 Future<Database> openSettingsDatabase() async {
   return openDatabase(
@@ -28,11 +30,61 @@ Future<Database> openSettingsDatabase() async {
 
 enum SaveStatus { saved, saving, unsaved }
 
+class AvatarImage {
+  String avatar;
+  MaterialColor color;
+
+  AvatarImage({required this.avatar, required this.color});
+
+  @override
+  int get hashCode => Object.hash(color, avatar);
+
+  @override
+  bool operator ==(Object other) {
+    if (other is! AvatarImage) return false;
+    if (other.avatar != avatar) return false;
+    if (other.color != color) return false;
+
+    return true;
+  }
+
+  String toDb() {
+    try {
+      return jsonEncode({
+        'avatar': avatar,
+        'color': Colors.primaries.indexOf(color),
+      });
+    } catch (e) {
+      return '';
+    }
+  }
+
+  factory fromDb(dynamic dbValue) {
+    String avatar = '';
+    MaterialColor color = defaultAppBarSnapshot.color;
+
+    if (dbValue == '') {
+      return AvatarImage(color: color, avatar: avatar);
+    }
+
+    try {
+      final decodedImage = jsonDecode(dbValue as String);
+      avatar = decodedImage['avatar'] as String;
+      color = Colors.primaries[decodedImage['color'] as int];
+    } catch (e) {
+      avatar = '';
+      color = defaultAppBarSnapshot.color;
+    }
+
+    return AvatarImage(color: color, avatar: avatar);
+  }
+}
+
 class Settings {
   final String name;
   String uuid;
   String username;
-  String image;
+  AvatarImage image;
   String token;
   String? storage;
   List<String> friends;
@@ -60,7 +112,7 @@ class Settings {
       'name': name,
       'uuid': uuid,
       'username': username,
-      'image': image,
+      'image': image.toDb(),
       'token': token,
       'storage': storage,
       'friends': jsonEncode(friends),
@@ -74,7 +126,7 @@ class Settings {
       name: dbValue['name'] as String,
       uuid: dbValue['uuid'] as String,
       username: dbValue['username'] as String,
-      image: dbValue['image'] as String,
+      image: AvatarImage.fromDb(dbValue['image']),
       token: dbValue['token'] as String,
       storage: dbValue['storage'] as String?,
       background: (dbValue['background'] as int) == 1,
@@ -126,7 +178,7 @@ class Settings {
       name: 'onlysettings',
       uuid: const Uuid().v4(),
       username: '',
-      image: '',
+      image: AvatarImage(avatar: '', color: defaultAppBarSnapshot.color),
       token: '',
       storage: '',
       friends: [],

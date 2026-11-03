@@ -6,7 +6,6 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' as ll;
 import 'package:map_launcher/map_launcher.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:where/settings.dart';
 import 'package:where/share.dart';
 import 'package:where/store.dart';
 import 'package:where/util.dart';
@@ -21,11 +20,7 @@ class MapPage extends StatefulWidget {
   State<StatefulWidget> createState() => _MapPageState();
 }
 
-typedef _ShareAndLocation = ({
-  Share share,
-  ShareLocation location,
-  Color color,
-});
+typedef _ShareAndLocation = ({Share share, ShareLocation location});
 
 class _MapPageState extends State<MapPage> {
   bool showTimeAgo = false;
@@ -33,32 +28,26 @@ class _MapPageState extends State<MapPage> {
   bool isUploading = false;
   List<Share> shares = [];
   Set<String> showUserMenu = {};
-  Map<String, Color> colors = {};
-
-  Color getColor(Share share) =>
-      colors.containsKey(share.storage) ? colors[share.storage]! : Colors.grey;
 
   List<ShareLocation> sortLocations(Share share) =>
       share.locations.sorted((l, r) => r.timestamp.compareTo(l.timestamp));
 
   Iterable<_ShareAndLocation> iterateShares(List<Share> shares) =>
       shares.expand(
-        (share) => sortLocations(share).map(
-          (location) =>
-              (share: share, location: location, color: getColor(share)),
-        ),
+        (share) =>
+            sortLocations(share)
+                .map((location) => (share: share, location: location)),
       );
 
-  Iterable<({Share share, ShareLocation location, Color color})>
-  iterateCurrentShares(List<Share> shares) => shares.map(
-    (share) => (
-      share: share,
-      location: share.locations
-          .sorted((l, r) => r.timestamp.compareTo(l.timestamp))
-          .first,
-      color: getColor(share),
-    ),
-  );
+  Iterable<_ShareAndLocation> iterateCurrentShares(List<Share> shares) =>
+      shares.map(
+        (share) => (
+          share: share,
+          location: share.locations
+              .sorted((l, r) => r.timestamp.compareTo(l.timestamp))
+              .first,
+        ),
+      );
 
   CameraFit fit = const CameraFit.coordinates(
     coordinates: [ll.LatLng(43.18449, -109.65367)],
@@ -83,7 +72,6 @@ class _MapPageState extends State<MapPage> {
   }
 
   Future<void> initAsync() async {
-    await initFromSettings();
     await refresh(updateFit: true);
   }
 
@@ -91,21 +79,6 @@ class _MapPageState extends State<MapPage> {
     setState(() {
       showTimeAgo = !showTimeAgo;
     });
-  }
-
-  Future<void> initFromSettings() async {
-    final settings = await Settings.getSingleton();
-    if (settings.storage != null) {
-      colors[settings.storage!] = Colors.blue;
-    }
-    colors.addEntries(
-      settings.friends.mapIndexed(
-        (index, storage) => MapEntry(
-          storage,
-          Colors.primaries[index % Colors.primaries.length],
-        ),
-      ),
-    );
   }
 
   Future<void> refit() async {
@@ -176,7 +149,7 @@ class _MapPageState extends State<MapPage> {
               .map(
                 (share) => Polyline(
                   points: sortLocations(share).map((l) => l.location).toList(),
-                  color: getColor(share),
+                  color: share.image.color,
                   strokeWidth: 5,
                 ),
               )
@@ -265,12 +238,27 @@ class _MapPageState extends State<MapPage> {
                           );
                         },
                         child: CircleAvatar(
-                          backgroundColor: shareAndLocation.color,
-                          child: const Icon(
-                            Icons.person_pin_circle,
-                            size: _avatarSize,
-                            color: Colors.white,
-                          ),
+                          backgroundColor: shareAndLocation.share.image.color,
+                          child: shareAndLocation.share.image.avatar.isEmpty
+                              ? const Icon(
+                                  Icons.person_pin_circle,
+                                  size: _avatarSize,
+                                  color: Colors.white,
+                                )
+                              : FittedBox(
+                                  fit: .cover,
+                                  child: Text(
+                                    shareAndLocation.share.image.avatar,
+                                    style: TextStyle(
+                                      color:
+                                          shareAndLocation.share.image.color
+                                                  .computeLuminance() >
+                                              0.5
+                                          ? Colors.black
+                                          : Colors.white,
+                                    ),
+                                  ),
+                                ),
                         ),
                       ),
                       DecoratedBox(
@@ -376,14 +364,21 @@ class _MapPageState extends State<MapPage> {
 class _MapBubble extends StatelessWidget {
   final _ShareAndLocation shareAndLocation;
   final VoidCallback onClosed;
+  final Color textColor;
 
-  const _MapBubble({required this.onClosed, required this.shareAndLocation});
+  _MapBubble({required this.onClosed, required this.shareAndLocation})
+    : textColor = shareAndLocation.share.image.color.computeLuminance() > 0.5
+          ? Colors.black
+          : Colors.white;
 
   @override
   Widget build(BuildContext context) => Padding(
     padding: const .only(bottom: 10),
     child: CustomPaint(
-      painter: _MapBubblePainter(triangleSize: 10),
+      painter: _MapBubblePainter(
+        shareAndLocation: shareAndLocation,
+        triangleSize: 10,
+      ),
       child: Padding(
         padding: const .all(5),
         child: Column(
@@ -398,9 +393,12 @@ class _MapBubble extends StatelessWidget {
                   ),
                 ).show();
               },
-              child: const Row(
+              child: Row(
                 spacing: 5,
-                children: [Icon(Icons.directions), Text('Get Directions')],
+                children: [
+                  Icon(Icons.directions, color: textColor),
+                  Text('Get Directions', style: TextStyle(color: textColor)),
+                ],
               ),
             ),
           ],
@@ -412,7 +410,11 @@ class _MapBubble extends StatelessWidget {
 
 class _MapBubblePainter extends CustomPainter {
   final double triangleSize;
-  _MapBubblePainter({required this.triangleSize});
+  final _ShareAndLocation shareAndLocation;
+  _MapBubblePainter({
+    required this.shareAndLocation,
+    required this.triangleSize,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -428,17 +430,10 @@ class _MapBubblePainter extends CustomPainter {
     path.lineTo(size.width, 0);
     path.lineTo(0, 0);
 
-    final border = Paint();
-    border.style = .stroke;
-    border.strokeWidth = 2;
-    border.strokeJoin = .round;
-    border.strokeCap = .round;
-
     final fill = Paint();
     fill.style = .fill;
-    fill.color = Colors.lightBlue.shade100;
+    fill.color = shareAndLocation.share.image.color;
 
-    canvas.drawPath(path, border);
     canvas.drawPath(path, fill);
   }
 

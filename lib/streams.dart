@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 class AppBarStreamSnapshot {
-  final Color color;
+  final MaterialColor color;
   final String title;
   final Color textColor;
   final List<Widget> actions;
@@ -16,7 +16,7 @@ class AppBarStreamSnapshot {
   });
 
   AppBarStreamSnapshot copyWith({
-    Color? color,
+    MaterialColor? color,
     String? title,
     Color? textColor,
     List<Widget>? actions,
